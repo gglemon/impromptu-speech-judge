@@ -1,0 +1,32 @@
+{
+  "name": "impromptu-speech-judge",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "scripts/start-ollama.sh && next dev",
+    "build": "next build",
+    "start": "scripts/start-ollama.sh && next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
+    "@google/genai": "^1.42.0",
+    "@huggingface/transformers": "^3.8.1",
+    "@types/nodemailer": "^7.0.11",
+    "next": "16.1.6",
+    "nodemailer": "^8.0.1",
+    "openai": "^6.25.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

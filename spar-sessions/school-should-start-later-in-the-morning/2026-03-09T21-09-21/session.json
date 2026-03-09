@@ -1,0 +1,69 @@
+{
+  "resolution": "School should start later in the morning.",
+  "userSide": "aff",
+  "userName": "",
+  "aiSide": "neg",
+  "ai_constructive": "Hello, my name is AI Debate Agent, and I stand in negation of this resolution. I think we should look at how this affects students' health and safety. We need to judge ideas by how well they protect kids.\n\nFirst, starting school later makes students sleepy during class. Studies show teens need more sleep, so early classes make them tired and less able to learn. For example, if school starts at 8:00, students wake up at 6:30, which is too early for their bodies. They might fall asleep in class or have accidents, which is unsafe. This hurts their health and schoolwork, so it's not a good idea.\n\nSecond, delaying school classes makes it harder for students to get to school on time. Most buses leave homes early in the morning, so starting school later means buses need to change. But buses are expensive and important for many families. If buses leave later, some students might miss the bus or have to walk farther, which is dangerous. Also, more buses need to run later, costing more money. This could cause problems for the whole school system.\n\nThird, moving school times later might mess up after-school jobs. Many students work part-time to help their families. If school ends earlier, they have more time for jobs, but if school starts later, it might mean they can't work as much. Also, jobs might end earlier, making it hard for students to get all they need. This could cause stress and not help them focus on school or family responsibilities.\n\nIn short, this resolution could make students sleepy, cause bus problems, and hurt after-school jobs. We should keep school starting early to protect students' health and the school system. Vote against this resolution!",
+  "ai_rebuttal": "In my rebuttal, I think the affirmative team forgot about real life. They talked about sleep and grades, but didn't say what happens to everything else. Let's look at the big picture.\n\nFirst, the affirmative said more sleep helps kids learn better. But my constructive showed how starting school later causes bus problems. Buses are expensive and important for many students. If we delay start times, buses must change too. This costs more money and could leave some students behind. The affirmative didn't say how we pay for new buses or why we should change the whole schedule just for sleep. Maybe the sleep idea is good, but it doesn't fix other big problems.\n\nSecond, they said sleepy students have worse grades. But they didn't address how this affects the whole school system. For example, if buses leave later, some students might not make it to school on time. They could be late or miss class, which is worse than being sleepy. Also, the affirmative talked about sleep but didn't say what happens to after-school jobs. Many students work to help their families. If school starts later, they might not have time for jobs. This could hurt families and cause stress. The affirmative didn't mention this important thing.\n\nThird, they talked about fewer accidents, but that's not the main problem. The real issue is that changing school times could cause bigger risks. For instance, if buses start leaving later, students might walk home from school at dark, which is dangerous. Or, if kids are tired from lack of sleep, they might still be at risk. The affirmative focused on sleep but ignored how these changes mess up daily life for everyone. We need to protect students' health and safety, not just pretend changing school times is easy.\n\nIn short, the affirmative didn't answer the key problems I brought up. Buses, jobs, and real safety risks are still there. We should stick with the status quo. Vote against this resolution!",
+  "crossfire_questions": [
+    "Your speech says more sleep helps grades, but studies show teens need more sleep for health, not just grades—what if they get good grades but still get sick more often because of less time for physical activity?",
+    "You mentioned sleepy kids cause car accidents, but what if some students sleep in so much they're late for school and walk instead—doesn't that put them at more risk than driving when sleepy?",
+    "You talked about students being awake for longer, but my side argued bus schedules are expensive to change—what if delaying school also means fewer after-school jobs, and kids feel stressed about losing income?"
+  ],
+  "user_constructive": "Arg 1: Students get more sleep when school starts later.\n\n•\nSleep is like juice for the brain. It helps kids pay attention and remember things.\n•\nEarly buses are gone when sleepy kids are still half-asleep. Starting later keeps everyone awake and safe.\nMore sleep means better grades and fewer car accidents.\n\nArg 2: Sleepy students do worse in school.\n\n•\nThink about it like this: A sleepy kid is like a tired car. It doesn't go fast or far. It breaks down more often.\n•\nWhen students are tired, they can't think straight. They miss problems and forget what the teacher said.\nGetting better grades and being in class helps kids pass tests and go to good colleges.\n\nArg 3: Later start times help kids be safer.\n\n•\nWhen kids are sleep-deprived, they are more likely to have accidents at home or on the way to school.\n•\nStarting school later reduces the number of sleepy driving teens who cause car crashes.\nFewer accidents means more lives saved and families stay together.",
+  "user_crossfire": "[Q1] User asks: .But studies also show that teens who don't get enough sleep might be more at risk for car crashes if they drive, so how is waking up early safer?\n\n[Q1] User responds: More sleep helps students stay awake and learn better in class. If they are sleepy, they might get sick more often because they don't have the energy to do physical activity or take care of themselves properly. Getting enough sleep is important for both grades and staying healthy.",
+  "user_rebuttal": "In my rebuttal, I will counter the negative's arguments about sleep, buses, and jobs. First, the negative says early school makes students sleepy, but that's because teens need more sleep; later start times fix that problem. Second, about buses, many schools already run buses late, and flexible options exist, so it's not a big issue. Third, for jobs, students can still work part-time with later school, and it helps them focus on school first. Overall, later start times are safer and better for learning. Vote yes!",
+  "feedback": {
+    "overall_score": 6.5,
+    "overall_summary": " performed well by directly addressing the negative's arguments with evidence-based content, though they could improve on deeper engagement with the opponent's specific points and refine their delivery.",
+    "constructive": {
+      "score": 7,
+      "feedback": " made logical arguments about sleep, learning, and safety, supported by analogies and clear explanations, though they could have provided more concrete evidence.",
+      "ratings": {
+        "content": 7.5,
+        "structure": 7,
+        "delivery": 6.5
+      }
+    },
+    "crossfire": {
+      "score": 5,
+      "feedback": " engaged effectively with the question but could have been more proactive in probing the negative's position.",
+      "ratings": {
+        "cross_examination": 5,
+        "delivery": 5
+      }
+    },
+    "rebuttal": {
+      "score": 6,
+      "feedback": " addressed the negative's arguments but could have been more specific in refuting points like bus schedules and after-school jobs.",
+      "ratings": {
+        "content": 6.5,
+        "refutation": 5,
+        "delivery": 6.5
+      }
+    },
+    "strengths": [
+      "Strong evidence-based arguments on sleep and safety",
+      "Effective use of analogies for clarity",
+      "Direct engagement with negative's key points"
+    ],
+    "improvements": [
+      {
+        "aspect": "Refutation",
+        "issue": "Did not directly counter specific negative arguments like bus schedules or after-school jobs with detailed solutions.",
+        "suggestion": "Provide specific counterpoints to each negative argument, such as discussing flexible bus options or time management for jobs."
+      },
+      {
+        "aspect": "Crossfire",
+        "issue": "Limited questioning and responses missed opportunities to deepen the clash.",
+        "suggestion": "Ask more targeted questions about the negative's assumptions, like how they plan to fund bus changes."
+      },
+      {
+        "aspect": "Delivery",
+        "issue": "Speech felt a bit rushed in some sections.",
+        "suggestion": "Practice pacing to ensure smoother transitions between arguments."
+      }
+    ]
+  },
+  "savedAt": "2026-03-09T21:09:21.095Z"
+}

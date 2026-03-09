@@ -1,0 +1,69 @@
+{
+  "resolution": "Students should wear uniforms in middle school.",
+  "userSide": "aff",
+  "userName": "",
+  "aiSide": "neg",
+  "ai_constructive": "Hello, my name is AI Debate Agent, and I stand in negation of this resolution. I think students should not wear uniforms because it limits choices, costs money, and doesn't help everyone.\n\nFirst, uniforms take away personal style. Kids can't wear cool clothes or show their hobbies. For example, some like bright colors, others prefer fun patterns. Wearing the same boring outfit every day makes school boring and less fun.\n\nSecond, uniforms cost money for families. Middle school is expensive. Some families have tight budgets. Buying a whole new outfit costs more than regular clothes. Plus, if uniforms wear out, they need to buy more. This puts a strain on family budgets.\n\nThird, uniforms don't teach responsibility. Students need to learn about personal style and expressing themselves. Wearing different clothes helps kids understand what feels right. It builds confidence and helps them stand out in good ways.\n\nIn short, uniforms make school less fun, cost extra money, and stop kids from learning about themselves. We should let students choose their clothes to make school better for everyone. Vote against the resolution!",
+  "ai_rebuttal": "In my rebuttal, I think the affirmative side forgot some important things about uniforms. They said uniforms stop kids from being teased, but that's not true. Bullies can still pick on kids for other reasons, like how they act or their ideas. Also, uniforms cost money, which hurts families. Some families can't afford it, so they might have to wear old or broken clothes. The affirmative talked about helping kids focus, but that's not the main job of school. School is for learning, not for stopping kids from having fun with clothes. Kids need to learn about themselves and express who they are. Wearing boring clothes every day makes school less exciting. And if uniforms are about safety, that's not enough. Kids can be safe in many ways without uniforms. They need to learn to be themselves, not just wear the same thing. Uniforms don't teach responsibility; they stop kids from growing. In short, the affirmative missed the point. Voting for uniforms hurts kids' choices and costs money. Let's keep school fun and open for everyone.",
+  "crossfire_questions": [
+    "If everyone wears the same clothes, how do bullies know who to target, and what about kids who get picked on for other reasons, like being different in personality?",
+    "If uniforms help focus on school, then why do you think kids who worry about clothes aren't distracted, but maybe other things like social problems or boredom still distract them?",
+    "You said uniforms help focus on learning, but if kids can't show their hobbies through clothes, aren't they missing a way to feel confident and express themselves, which could help with learning too?"
+  ],
+  "user_constructive": "Arg 1: Uniforms stop kids from having different clothes that might make others laugh or tease them.\n\n•\nWhen students wear the same clothes, it's harder for bullies to find someone to mess with because everyone looks alike.\n•\nEven if a kid doesn't have fancy clothes, they don't feel bad because nobody is showing off their cool stuff.\nThis makes school a safer place where everyone is treated equally, not just because of what they wear.\n\nArg 2: Uniforms help students focus on learning, not on what they put on.\n\n•\nKids spend less time worrying about picking out clothes or comparing their outfits to others.\n•\nMore time can be spent on homework, playing games, or talking with friends instead of checking out the new shoes.\nThis focus switch helps students learn better and get better grades in school.",
+  "user_crossfire": "[Q1] User asks: Why would you say uniforms don't help with responsibility if they make it easier for kids to focus on school and not clothes?",
+  "user_rebuttal": "Why would you say uniforms don't help with responsibility if they make it easier for kids to focus on school and not clothes?",
+  "feedback": {
+    "overall_score": 6.7,
+    "overall_summary": " performed adequately in the debate, presenting logical arguments in the constructive phase but failing to effectively engage with the AI's rebuttal and crossfire responses. Their arguments lacked depth and failed to address key counterpoints directly.",
+    "constructive": {
+      "score": 7.3,
+      "feedback": "Presented clear and logical arguments about reducing bullying and improving focus, but could have included more specific evidence or examples to strengthen the points.",
+      "ratings": {
+        "content": 8,
+        "structure": 7,
+        "delivery": 7
+      }
+    },
+    "crossfire": {
+      "score": 4,
+      "feedback": "The question was basic and did not probe deeply into the opponent's arguments. Response was generic and failed to challenge the AI's rebuttal effectively.",
+      "ratings": {
+        "cross_examination": 2,
+        "delivery": 6
+      }
+    },
+    "rebuttal": {
+      "score": 3.3,
+      "feedback": "Lacked engagement with the AI's specific arguments, offering generic responses instead of directly refuting points about cost, responsibility, and fun. Failed to address the core issues raised in the AI's rebuttal.",
+      "ratings": {
+        "content": 3,
+        "refutation": 2,
+        "delivery": 4
+      }
+    },
+    "strengths": [
+      "Clear and logical constructive arguments",
+      "Good delivery in constructive phase",
+      "Focus on reducing bullying and improving focus"
+    ],
+    "improvements": [
+      {
+        "aspect": "Rebuttal",
+        "issue": "Failed to directly engage with AI's arguments on cost, responsibility, and fun",
+        "suggestion": "Practice specifically addressing each opponent's point with evidence and counterarguments"
+      },
+      {
+        "aspect": "Crossfire",
+        "issue": "Insightful questions were lacking",
+        "suggestion": "Prepare more probing questions that challenge the opponent's claims"
+      },
+      {
+        "aspect": "Content",
+        "issue": "Lack of specific evidence in arguments",
+        "suggestion": "Include real-world examples or data to support claims"
+      }
+    ]
+  },
+  "savedAt": "2026-03-09T20:00:42.763Z"
+}

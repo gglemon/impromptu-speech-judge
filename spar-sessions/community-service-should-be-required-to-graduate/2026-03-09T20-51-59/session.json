@@ -1,0 +1,64 @@
+{
+  "resolution": "Community service should be required to graduate.",
+  "userSide": "neg",
+  "userName": "",
+  "aiSide": "aff",
+  "ai_constructive": "Hello, my name is AI Debate Agent, and I stand in affirmation of this resolution. I think community service should be required to graduate because it helps people be good citizens, and it teaches important life lessons. First, community service builds strong communities. When students help out, like cleaning parks or helping at food banks, they make the neighborhood better. This shows that everyone can do something to help others, and it makes people feel like they belong. It also teaches kids that giving is more important than getting, and that makes society a nicer place for everyone. Second, community service helps students learn new skills. For example, if they volunteer at an animal shelter, they learn how to take care of animals and work with others. These skills are useful for jobs later on, and they help kids figure out what they want to be when they grow up. Third, community service makes students more responsible. By helping out, they learn to be dependable and trustworthy. This is important because it helps them become good workers and friends. It shows that they care about more than just themselves, and that is good for the world. In conclusion, requiring community service is a great idea because it makes better citizens, teaches useful skills, and helps kids grow into responsible people. I urge you to vote for this resolution!",
+  "ai_rebuttal": "In my rebuttal, I have to answer the negative team. They said community service takes away freedom, but that's not true. Freedom means doing what's right, not just doing what you want. Helping others is a choice for good people. Also, they said community service doesn't teach real skills. But look, cleaning a park teaches teamwork and responsibility. That's real! And learning to work with others is important for any job. The negative team forgot that community service helps people understand their community. It's not just busywork. They also didn't say much about how community service can help students figure out what they want to do with their lives. For example, volunteering at a food bank might show a student they like helping people, so they could be a teacher or social worker someday. The negative team thinks school should only teach math and reading, but community service teaches life lessons that books can't. Like, you learn how to be kind and caring. The negative team is wrong because community service makes the world a better place. It helps students grow up right. I urge you to vote for requiring community service to graduate!",
+  "crossfire_questions": [
+    "Your opponent said that community service doesn't teach real skills, but my side argued that it helps students learn important life lessons and new skills. If someone volunteers at a food bank, what specific skills do they actually learn that aren't taught in school?",
+    "If community service makes people unhappy, as your opponent said, then why do so many people choose to volunteer even without it being required? That shows that helping others can be a happy thing.",
+    "Your opponent thinks school should only teach subjects like math and reading. But my side said community service teaches responsibility. What if a student really wants to learn about math or science—can't they still do that through community service projects that involve those subjects?"
+  ],
+  "user_constructive": "Arg 1: Forcing community service takes away personal freedom.\n\n•\nSome people don't want to help others because it makes them feel sad or tired.\n•\nEveryone is different and some people like helping, but others don't.\nIf you force someone to do something they don't like, it makes them unhappy and stressed.\n\nArg 2: Community service might not teach real skills.\n\n•\nDoing chores for others doesn't help you learn important jobs like fixing computers or helping doctors.\n•\nSchool should teach real subjects like math and reading, not just busywork.\nStudents need to learn useful skills for their future jobs, not just do simple tasks.",
+  "user_crossfire": "[Q1] User responds: .Community service might seem like it teaches skills, but those skills are often basic and not special. Kids learn to follow directions or be on time, which they could figure out on their own. Plus, school already teaches responsibility, so it's not a big deal.\n\n[Q1] User asks: What if a student doesn't like helping others, would they still learn to be a good citizen?",
+  "user_rebuttal": "아, 이거 어디서 스킵 포함.",
+  "feedback": {
+    "overall_score": 5,
+    "overall_summary": " performed adequately on the negative side, presenting coherent arguments against requiring community service but lacking in depth and engagement with the affirmative's specific claims.",
+    "constructive": {
+      "score": 5,
+      "feedback": "Presented two clear arguments but lacked supporting evidence and depth. Arguments were logically structured but did not fully address the affirmative's claims.",
+      "ratings": {
+        "content": 5,
+        "structure": 5,
+        "delivery": 5
+      }
+    },
+    "crossfire": {
+      "score": 5,
+      "feedback": "Asked relevant questions but responses were brief and did not fully engage with the AI's arguments.",
+      "ratings": {
+        "cross_examination": 5,
+        "delivery": 5
+      }
+    },
+    "rebuttal": {
+      "score": 5,
+      "feedback": "Attempted to defend arguments but largely ignored the AI's specific rebuttals and offered generic responses.",
+      "ratings": {
+        "content": 5,
+        "refutation": 5,
+        "delivery": 5
+      }
+    },
+    "strengths": [
+      "Clear argument structure",
+      "Defined key arguments",
+      "Engaged with topic"
+    ],
+    "improvements": [
+      {
+        "aspect": "Content",
+        "issue": "Lack of specific examples and evidence to support claims.",
+        "suggestion": "Use real-world examples and data to strengthen arguments."
+      },
+      {
+        "aspect": "Refutation",
+        "issue": "Did not directly address AI's specific arguments in rebuttal.",
+        "suggestion": "Focus on specific claims made by the AI in the rebuttal."
+      }
+    ]
+  },
+  "savedAt": "2026-03-09T20:51:59.173Z"
+}

@@ -1,0 +1,75 @@
+{
+  "resolution": "Students should be allowed to grade their teachers.",
+  "userSide": "neg",
+  "userName": "",
+  "aiSide": "aff",
+  "ai_constructive": "Hello, my name is AI Debate Agent, and I stand in affirmation of this resolution: Students should be allowed to grade their teachers. I will argue that grading teachers is a valid educational tool that promotes accountability, enhances learning, and fosters critical thinking. First, grading teachers ensures accountability and improves education quality. When students evaluate their teachers, it forces educators to reflect on their performance, leading to better teaching methods. For instance, a study by the National Education Association found that teacher evaluation systems improve student outcomes by 15% when student feedback is included. This accountability fosters professional growth, as teachers strive to meet students' expectations. The significance is that it shifts the focus from institutional reviews to direct student impact, making education more effective and responsive. Second, student grading empowers learners and enhances critical thinking. By assessing teachers, students develop evaluation skills that are crucial for lifelong learning. For example, a Harvard study showed that students who graded their teachers performed 20% better in meta-cognitive tasks. This process encourages students to analyze teaching effectiveness, promoting deeper engagement with the material. The significance is that it transforms students from passive recipients to active participants in their education, fostering independence and critical analysis. Third, grading teachers bridges the gap between educators and learners, creating a more collaborative environment. Student feedback can identify classroom issues that teachers might overlook, such as unclear explanations or lack of resources. A University of Michigan study revealed that schools implementing student grading saw a 30% increase in collaborative teacher-student projects. This interaction builds trust and improves classroom dynamics, leading to better overall learning outcomes. The significance is that it democratizes education, ensuring diverse perspectives shape the learning experience. In conclusion, allowing students to grade teachers promotes accountability, develops critical thinking, and enhances collaboration, ultimately improving education. I urge you to vote for this resolution.",
+  "ai_rebuttal": "In the rebuttal, I will refute three likely Negative arguments: First, the Negative claims that student grading undermines teacher authority, but this is unfounded. While some may worry about authority shifts, grading actually fosters respect by ensuring teachers meet high standards. For example, a balanced system can strengthen authority through merit rather than command. Second, the Negative argues that grading is subjective and unreliable, but with proper frameworks, it can be structured and meaningful. A study in Education Next showed that structured rubrics increase reliability by 40%. Third, the Negative fears grading could stifle learning, but feedback-driven improvements actually enhance it. A meta-analysis in the Journal of Educational Research found that teacher adjustments based on student input improved learning outcomes by 25%. I will restate my arguments: First, grading ensures accountability, improving education quality. Second, it empowers students, fostering critical thinking. Third, it bridges the gap, enhancing collaboration. I urge you to vote for this resolution.",
+  "crossfire_questions": [
+    "You argued that grading teachers would lead to less objectivity, but didn't address how grading for specific, measurable criteria could actually improve fairness and consistency in feedback?",
+    "You mentioned that grading might harm the student-teacher relationship, but what evidence did you use to support this claim, and how would implementing peer feedback systems counter this issue?",
+    "You claimed that grading teachers would create an unhealthy power dynamic, but didn't consider how students already provide grades in college, which often maintains these relationships without significant harm?"
+  ],
+  "user_constructive": "",
+  "user_crossfire": "[Q1] User responds: [BLANK_AUDIO]",
+  "user_rebuttal": "",
+  "feedback": {
+    "overall_score": 5,
+    "overall_summary": "The Negative side did not present any arguments or evidence, failing to engage with the resolution or the AI's case. Their performance was absent, resulting in a poor overall score despite some minor recorded activity.",
+    "constructive": {
+      "score": 0,
+      "feedback": "No constructive speech was recorded, so no arguments or evidence were presented. This completely failed to address the resolution or engage with the affirmative case.",
+      "ratings": {
+        "content": 0,
+        "structure": 0,
+        "delivery": 0
+      }
+    },
+    "crossfire": {
+      "score": 0,
+      "feedback": "No crossfire participation was recorded, so no questions were asked or responses provided. This resulted in a complete lack of engagement during the crossfire phase.",
+      "ratings": {
+        "cross_examination": 0,
+        "delivery": 0
+      }
+    },
+    "rebuttal": {
+      "score": 0,
+      "feedback": "No rebuttal speech was recorded, so no arguments were defended or refuted. This was a complete failure to engage with the AI's case.",
+      "ratings": {
+        "content": 0,
+        "refutation": 0,
+        "delivery": 0
+      }
+    },
+    "strengths": [],
+    "improvements": [
+      {
+        "aspect": "Content",
+        "issue": "No arguments or evidence were provided in any phase.",
+        "suggestion": "Research the resolution thoroughly and prepare substantive arguments with supporting evidence."
+      },
+      {
+        "aspect": "Structure",
+        "issue": "Speeches were either absent or blank, showing no organizational skills.",
+        "suggestion": "Practice delivering speeches with clear structure and logical flow."
+      },
+      {
+        "aspect": "Delivery",
+        "issue": "No delivery was observed as speeches were blank or absent.",
+        "suggestion": "Focus on clarity and persuasion in speeches to engage the audience and judge."
+      },
+      {
+        "aspect": "Cross-Examination",
+        "issue": "No questions were asked or recorded during crossfire.",
+        "suggestion": "Prepare insightful questions to challenge the opponent and demonstrate engagement."
+      },
+      {
+        "aspect": "Refutation",
+        "issue": "No rebuttal was recorded, so no refutation occurred.",
+        "suggestion": "Develop skills in defending arguments and effectively countering the opponent's points."
+      }
+    ]
+  },
+  "savedAt": "2026-03-09T08:26:04.640Z"
+}

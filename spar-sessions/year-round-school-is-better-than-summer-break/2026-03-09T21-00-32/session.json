@@ -1,0 +1,69 @@
+{
+  "resolution": "Year-round school is better than summer break.",
+  "userSide": "neg",
+  "userName": "",
+  "aiSide": "aff",
+  "ai_constructive": "Hello, my name is AI Debate Agent, and I stand in affirmation of this resolution. I believe year-round school is better than summer break because it provides more learning opportunities, reduces inequality, and improves mental health. Let me explain my arguments.\n\nFirst, year-round school means more learning time. During summer break, kids forget what they learned in subjects like math and reading. For example, I forget my multiplication tables after summer! With year-round school, we keep learning all year, so we don’t fall behind. This is important because it helps all students succeed, especially those who need extra help. If we have school all year, we can catch kids up faster and make sure everyone is on track.\n\nSecond, year-round school reduces summer learning loss. Kids from low-income families often don’t have fun summer activities or books to read. They fall behind while others stay ahead. But with year-round school, everyone has equal chances to learn. Plus, it keeps kids safe from summer dangers like heat and crime. This matters because it helps close the achievement gap and keeps students safe.\n\nThird, year-round school helps with mental health. Summer break can be lonely for kids who miss their friends. They might feel bored or anxious when school starts again. But with year-round school, we stay connected with our friends and teachers. We don’t have that big break between semesters, so it feels more normal. This is crucial because it supports students’ emotional well-being and helps them stay focused on learning.\n\nIn conclusion, year-round school is better because it gives more learning opportunities, reduces inequality, and improves mental health. We should vote for this resolution to help all students succeed year-round.",
+  "ai_rebuttal": "In my rebuttal, I want to show that year-round school is still the better choice. My opponent argued that summer break causes kids to forget what they learn, but that's not always true. Families and schools can work together to prevent summer slide. For example, many families keep their kids in summer programs or reading clubs to keep learning. Also, year-round school doesn't mean no breaks at all. We can have shorter breaks instead of one big summer vacation. This way, kids still have time to relax with family, but they don't fall behind in learning. My point about reducing inequality still stands. Kids from low-income families often don't have summer activities or safe places to be. Year-round school gives them more opportunities to learn and stay safe from heat and crime. Plus, it helps close the achievement gap. The opponent said a steady schedule helps kids focus, and I agree with that. Year-round school provides a consistent routine, which helps students build good habits and stay on track. But the opponent didn't mention the mental health benefits. Summer break can be lonely for some kids, especially when they're away from friends. Year-round school helps them stay connected and reduces that stress. Finally, the opponent didn't address how year-round school can include fun activities and breaks. We can have shorter breaks for holidays and family time. This keeps the learning steady while still allowing for some downtime. In conclusion, year-round school gives more learning opportunities, reduces inequality, and supports mental health. We should vote for this resolution to help all students succeed throughout the year.",
+  "crossfire_questions": [
+    "You mentioned that students lose reading and math skills during summer break, but how do we know these skills can't be easily refreshed at home without school?",
+    "You said a regular school schedule helps kids build good study habits, but what about kids who have trouble staying on a routine without school structure to guide them?",
+    "You claimed long breaks interrupt learning, but if we move breaks to shorter breaks throughout the year, wouldn't that solve the problem without changing the school year?"
+  ],
+  "user_constructive": "Main Arguments\n\nArg 1: Taking months off from school makes kids forget what they learned.\n\n•\nStudies show that students lose reading and math skills during summer break.\n•\nThis is called the summer slide, and it hurts their chances in school later on.\nGetting back to school behind means kids have to work harder and might fall behind forever.\n\nArg 2: School gives kids a steady schedule that helps them focus.\n\n•\nHaving school every day keeps kids on a routine, which helps with learning and staying on track.\n•\nWithout school, kids might not get the right amount of homework or study time to stay smart.\nA regular schedule helps kids build good study habits and do better in school overall.\n\nArg 3: School breaks up time for learning with long vacations.\n\n•\nKids miss out on important lessons during summer months because they're not in school.\n•\nLearning is better when it's consistent, not interrupted by long breaks.\nMissing parts of the school year can make it harder for kids to master subjects and keep up with others.",
+  "user_crossfire": "[Q1] User responds: Even if families try to help at home, they don't always have the time or money to get good resources. Also, schools offer structured activities and help that might not be available at home, like tutoring or summer camps.\n\n[Q1] User asks: You said year-round school gives more learning time, but what about breaks for family vacations and fun activities? Aren't those important too, and wouldn't that cause more stress for kids if they never get a break?",
+  "user_rebuttal": "",
+  "feedback": {
+    "overall_score": 5.7,
+    "overall_summary": "The speaker demonstrated a clear understanding of the resolution's core arguments but lacked depth in addressing counterpoints and failed to engage effectively with the opponent's rebuttal. Their crossfire performance was strong, but constructive and rebuttal phases showed limited engagement with the AI's arguments.",
+    "constructive": {
+      "score": 5.8,
+      "feedback": "The speaker presented logical arguments with evidence, though some points were repetitive and lacked nuance. The structure was straightforward, but delivery could be more persuasive.",
+      "ratings": {
+        "content": 6,
+        "structure": 5,
+        "delivery": 6
+      }
+    },
+    "crossfire": {
+      "score": 8,
+      "feedback": "The speaker effectively challenged the AI's assumptions about parental limitations and the importance of breaks, showing critical thinking and engagement with the resolution.",
+      "ratings": {
+        "cross_examination": 9,
+        "delivery": 7
+      }
+    },
+    "rebuttal": {
+      "score": 1,
+      "feedback": "No rebuttal was recorded, resulting in a forfeit. The speaker failed to engage with the AI's arguments, which included addressing learning loss and schedule consistency.",
+      "ratings": {
+        "content": 1,
+        "refutation": 1,
+        "delivery": 1
+      }
+    },
+    "strengths": [
+      "Clear articulation of core arguments",
+      "Effective crossfire questioning",
+      "Evidence-based reasoning"
+    ],
+    "improvements": [
+      {
+        "aspect": "Rebuttal",
+        "issue": "No rebuttal was recorded, showing a failure to engage with the affirmative's arguments.",
+        "suggestion": "Practice addressing specific arguments with counterpoints and evidence."
+      },
+      {
+        "aspect": "Content",
+        "issue": "Lack of nuance in arguments, such as oversimplifying the impact of summer break.",
+        "suggestion": "Incorporate counterarguments and balance pros/cons to show depth."
+      },
+      {
+        "aspect": "Delivery",
+        "issue": "Limited engagement in constructive and rebuttal phases.",
+        "suggestion": "Work on active listening and timely responses to build persuasiveness."
+      }
+    ]
+  },
+  "savedAt": "2026-03-09T21:00:32.296Z"
+}
