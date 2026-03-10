@@ -21,9 +21,7 @@ interface CasualFeedback {
 
 export default function CasualPage() {
   const [stage, setStage] = useState<Stage>("loading");
-  const [randomTopic, setRandomTopic] = useState("");
-  const [customTopic, setCustomTopic] = useState("");
-  const topic = customTopic.trim() || randomTopic;
+  const [topic, setTopic] = useState("");
   const [transcript, setTranscript] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
   const [feedback, setFeedback] = useState<CasualFeedback | null>(null);
@@ -75,7 +73,7 @@ export default function CasualPage() {
   // Pick a random topic immediately on mount
   useEffect(() => {
     const t = casualTopics[Math.floor(Math.random() * casualTopics.length)];
-    setRandomTopic(t);
+    setTopic(t);
     setStage("topic");
   }, []);
 
@@ -123,21 +121,13 @@ export default function CasualPage() {
           <div className="space-y-8 text-center">
             <div className="rounded-2xl bg-emerald-950 border border-emerald-700 p-8 space-y-4">
               <p className="text-emerald-300 text-sm font-medium uppercase tracking-wide">Your Topic</p>
-              {!customTopic.trim() && (
-                <p className="text-3xl font-bold text-white leading-snug">{randomTopic}</p>
-              )}
-              <div className={customTopic.trim() ? "pt-0" : "pt-1"}>
-                {customTopic.trim() && (
-                  <p className="text-3xl font-bold text-white leading-snug mb-4">{customTopic.trim()}</p>
-                )}
-                <input
-                  type="text"
-                  value={customTopic}
-                  onChange={e => setCustomTopic(e.target.value)}
-                  placeholder="or type your own topic..."
-                  className="w-full bg-transparent border-b border-emerald-700 text-center text-emerald-100 placeholder-emerald-800 text-sm py-1 focus:outline-none focus:border-emerald-400 transition-colors"
-                />
-              </div>
+              <textarea
+                value={topic}
+                onChange={e => setTopic(e.target.value)}
+                rows={2}
+                placeholder="Type a topic..."
+                className="text-3xl font-bold text-white leading-snug text-center w-full bg-transparent border-none resize-none focus:outline-none placeholder-emerald-900"
+              />
             </div>
 
             <div className="space-y-3">

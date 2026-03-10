@@ -408,13 +408,12 @@ export default function DebatePracticePage() {
 
           <div className="rounded-2xl border border-purple-700 bg-purple-950 p-6 space-y-3">
             <p className="text-xs text-purple-400 uppercase tracking-widest font-semibold">Resolution</p>
-            <p className="text-2xl font-semibold text-white leading-snug">&ldquo;{topic}&rdquo;</p>
             <textarea
               value={topic}
               onChange={e => setTopic(e.target.value)}
               rows={2}
-              placeholder="Type your own resolution..."
-              className="w-full bg-transparent border border-purple-800 rounded-xl text-purple-100 placeholder-purple-900 text-sm p-3 resize-none focus:outline-none focus:border-purple-500 transition-colors"
+              placeholder="Type your resolution..."
+              className="text-2xl font-semibold text-white leading-snug text-center w-full bg-transparent border-none resize-none focus:outline-none placeholder-purple-900"
             />
           </div>
 
