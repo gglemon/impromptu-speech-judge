@@ -35,6 +35,12 @@ interface ArgumentResult extends ArgumentFeedback {
   transcript: string;
 }
 
+interface RedoComparison {
+  key_improvements: string[];
+  regressions: string[];
+  verdict: string;
+}
+
 const TURNS: Array<{ side: "aff" | "neg"; round: number }> = [
   { side: "aff", round: 1 },
   { side: "neg", round: 1 },
@@ -44,20 +50,40 @@ const TURNS: Array<{ side: "aff" | "neg"; round: number }> = [
   { side: "neg", round: 3 },
 ];
 
-type Stage = "intro" | "recording" | "rating" | "complete";
+type Stage = "intro" | "recording" | "rating" | "comparison" | "complete";
 
 function ScoreBadge({ score }: { score: number }) {
-  const color =
-    score >= 8
-      ? "text-green-400"
-      : score >= 6
-      ? "text-yellow-400"
-      : "text-red-400";
+  const color = score >= 8 ? "text-green-400" : score >= 6 ? "text-yellow-400" : "text-red-400";
   return (
     <span className={`text-4xl font-bold ${color}`}>
       {score}
       <span className="text-xl text-gray-500">/10</span>
     </span>
+  );
+}
+
+function ScoreDiff({ original, redo }: { original: number; redo: number }) {
+  const diff = parseFloat((redo - original).toFixed(1));
+  const improved = diff > 0;
+  const same = diff === 0;
+  return (
+    <span className={`text-sm font-semibold ml-2 ${improved ? "text-green-400" : same ? "text-gray-500" : "text-red-400"}`}>
+      {improved ? `▲ +${diff}` : same ? "—" : `▼ ${diff}`}
+    </span>
+  );
+}
+
+function CriterionRow({ label, original, redo }: { label: string; original: number; redo: number }) {
+  const diff = redo - original;
+  const arrow = diff > 0 ? "▲" : diff < 0 ? "▼" : "—";
+  const arrowColor = diff > 0 ? "text-green-400" : diff < 0 ? "text-red-400" : "text-gray-500";
+  return (
+    <div className="flex items-center justify-between text-sm py-1 border-b border-gray-800 last:border-0">
+      <span className="text-gray-500 w-20">{label}</span>
+      <span className="text-gray-400 w-8 text-center">{original}</span>
+      <span className={`w-8 text-center font-bold ${arrowColor}`}>{arrow}</span>
+      <span className="text-white font-semibold w-8 text-center">{redo}</span>
+    </div>
   );
 }
 
@@ -80,6 +106,21 @@ function TurnIndicator({ current }: { current: number }) {
   );
 }
 
+function advanceState(
+  isLastTurn: boolean,
+  setTurnIndex: React.Dispatch<React.SetStateAction<number>>,
+  setStage: (s: Stage) => void,
+  resetTurn: () => void
+) {
+  if (isLastTurn) {
+    setStage("complete");
+  } else {
+    setTurnIndex((i) => i + 1);
+    resetTurn();
+    setStage("recording");
+  }
+}
+
 export default function DebatePracticePage() {
   const [topic] = useState<string>(getRandomTopic);
   const [stage, setStage] = useState<Stage>("intro");
@@ -89,6 +130,8 @@ export default function DebatePracticePage() {
   const [results, setResults] = useState<ArgumentResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // input controls
   const [inputMode, setInputMode] = useState<"voice" | "text" | "ai">("voice");
   const [textInput, setTextInput] = useState("");
   const [recordingStarted, setRecordingStarted] = useState(false);
@@ -96,42 +139,126 @@ export default function DebatePracticePage() {
   const [hintLoading, setHintLoading] = useState(false);
   const [hintError, setHintError] = useState("");
 
-  const difficulty = getTopicDifficulty(topic);
+  // redo state
+  const [isRedoing, setIsRedoing] = useState(false);
+  const [originalForRedo, setOriginalForRedo] = useState<{ transcript: string; feedback: ArgumentFeedback } | null>(null);
+  const [redoTranscript, setRedoTranscript] = useState("");
+  const [redoFeedback, setRedoFeedback] = useState<ArgumentFeedback | null>(null);
+  const [comparison, setComparison] = useState<RedoComparison | null>(null);
+  const [comparisonLoading, setComparisonLoading] = useState(false);
+  const [comparisonError, setComparisonError] = useState("");
 
+  const difficulty = getTopicDifficulty(topic);
   const currentTurn = TURNS[turnIndex];
   const isLastTurn = turnIndex === TURNS.length - 1;
 
-  async function handleRecordingDone(transcript: string) {
-    setCurrentTranscript(transcript);
+  function resetTurnInputs() {
+    setCurrentTranscript("");
     setCurrentFeedback(null);
+    setTextInput("");
+    setRecordingStarted(false);
+    setHint("");
+    setHintError("");
+    setInputMode("voice");
+    setIsRedoing(false);
+    setOriginalForRedo(null);
+    setRedoTranscript("");
+    setRedoFeedback(null);
+    setComparison(null);
+    setComparisonError("");
+  }
+
+  async function fetchFeedback(transcript: string): Promise<ArgumentFeedback> {
+    const res = await fetch("/api/debate-argument-feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        resolution: topic,
+        side: currentTurn.side,
+        argument: transcript,
+        round: currentTurn.round,
+        previousArguments: results.map((r) => ({ side: r.side, round: r.round, transcript: r.transcript })),
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? "Feedback failed");
+    return data;
+  }
+
+  async function handleRecordingDone(transcript: string) {
     setError("");
     setIsLoading(true);
-    setStage("rating");
 
+    if (isRedoing) {
+      setRedoTranscript(transcript);
+      setStage("comparison");
+      try {
+        const feedback = await fetchFeedback(transcript);
+        setRedoFeedback(feedback);
+        fetchComparison(transcript, feedback);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Something went wrong");
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      setCurrentTranscript(transcript);
+      setCurrentFeedback(null);
+      setStage("rating");
+      try {
+        const feedback = await fetchFeedback(transcript);
+        setCurrentFeedback(feedback);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Something went wrong");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  }
+
+  async function fetchComparison(rt: string, rf: ArgumentFeedback) {
+    if (!originalForRedo) return;
+    setComparisonLoading(true);
+    setComparisonError("");
     try {
-      const res = await fetch("/api/debate-argument-feedback", {
+      const res = await fetch("/api/debate-redo-comparison", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           resolution: topic,
           side: currentTurn.side,
-          argument: transcript,
-          round: currentTurn.round,
-          previousArguments: results.map((r) => ({
-            side: r.side,
-            round: r.round,
-            transcript: r.transcript,
-          })),
+          originalTranscript: originalForRedo.transcript,
+          originalFeedback: originalForRedo.feedback,
+          redoTranscript: rt,
+          redoFeedback: rf,
+          difficulty,
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Feedback failed");
-      setCurrentFeedback(data);
+      if (!res.ok) throw new Error(data.error ?? "Comparison failed");
+      setComparison(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong");
+      setComparisonError(e instanceof Error ? e.message : "Comparison failed");
     } finally {
-      setIsLoading(false);
+      setComparisonLoading(false);
     }
+  }
+
+  function handleRedo() {
+    setOriginalForRedo({ transcript: currentTranscript, feedback: currentFeedback! });
+    setIsRedoing(true);
+    setCurrentTranscript("");
+    setCurrentFeedback(null);
+    setRedoTranscript("");
+    setRedoFeedback(null);
+    setComparison(null);
+    setComparisonError("");
+    setTextInput("");
+    setRecordingStarted(false);
+    setHint("");
+    setHintError("");
+    setInputMode("voice");
+    setStage("recording");
   }
 
   function handleNext() {
@@ -141,19 +268,17 @@ export default function DebatePracticePage() {
         { side: currentTurn.side, round: currentTurn.round, transcript: currentTranscript, ...currentFeedback },
       ]);
     }
-    if (isLastTurn) {
-      setStage("complete");
-    } else {
-      setTurnIndex((i) => i + 1);
-      setCurrentTranscript("");
-      setCurrentFeedback(null);
-      setTextInput("");
-      setRecordingStarted(false);
-      setHint("");
-      setHintError("");
-      setInputMode("voice");
-      setStage("recording");
+    advanceState(isLastTurn, setTurnIndex, setStage, resetTurnInputs);
+  }
+
+  function handleContinueFromComparison() {
+    if (redoFeedback) {
+      setResults((prev) => [
+        ...prev,
+        { side: currentTurn.side, round: currentTurn.round, transcript: redoTranscript, ...redoFeedback },
+      ]);
     }
+    advanceState(isLastTurn, setTurnIndex, setStage, resetTurnInputs);
   }
 
   async function fetchHint() {
@@ -169,11 +294,7 @@ export default function DebatePracticePage() {
           side: currentTurn.side,
           round: currentTurn.round,
           difficulty,
-          previousArguments: results.map((r) => ({
-            side: r.side,
-            round: r.round,
-            transcript: r.transcript,
-          })),
+          previousArguments: results.map((r) => ({ side: r.side, round: r.round, transcript: r.transcript })),
         }),
       });
       const data = await res.json();
@@ -197,9 +318,7 @@ export default function DebatePracticePage() {
       <main className="min-h-screen flex flex-col items-center justify-center p-8">
         <div className="w-full max-w-2xl space-y-8">
           <div className="text-center space-y-2">
-            <Link href="/" className="text-gray-500 hover:text-gray-300 text-sm">
-              ← Back
-            </Link>
+            <Link href="/" className="text-gray-500 hover:text-gray-300 text-sm">← Back</Link>
             <h1 className="text-3xl font-bold mt-2">Debate Practice</h1>
             <p className="text-gray-400">Practice arguing both sides of a resolution</p>
           </div>
@@ -245,9 +364,7 @@ export default function DebatePracticePage() {
   if (stage === "recording") {
     const isAff = currentTurn.side === "aff";
     const sideLabel = isAff ? "AFFIRMATIVE" : "NEGATIVE";
-    const instruction = isAff
-      ? `Argue FOR the resolution`
-      : `Argue AGAINST the resolution`;
+    const instruction = isAff ? "Argue FOR the resolution" : "Argue AGAINST the resolution";
     const borderColor = isAff ? "border-purple-700" : "border-orange-700";
     const bgColor = isAff ? "bg-purple-950" : "bg-orange-950";
     const labelColor = isAff ? "text-purple-400" : "text-orange-400";
@@ -257,7 +374,7 @@ export default function DebatePracticePage() {
         <div className="w-full max-w-2xl space-y-6">
           <div className="text-center space-y-1">
             <p className={`text-xs uppercase tracking-widest font-semibold ${labelColor}`}>
-              Round {currentTurn.round} — {sideLabel}
+              Round {currentTurn.round} — {sideLabel}{isRedoing ? " — REDO" : ""}
             </p>
           </div>
 
@@ -266,7 +383,16 @@ export default function DebatePracticePage() {
             <p className="text-white font-medium">&ldquo;{topic}&rdquo;</p>
           </div>
 
-          {/* Past arguments */}
+          {/* Previous original shown during redo */}
+          {isRedoing && originalForRedo && (
+            <div className="rounded-xl border border-gray-600 bg-gray-900 p-4 space-y-1">
+              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Your previous attempt</p>
+              <p className="text-sm text-gray-400 italic">&ldquo;{originalForRedo.transcript}&rdquo;</p>
+              <p className="text-xs text-gray-600 mt-1">Score: {originalForRedo.feedback.score}/10 — {originalForRedo.feedback.summary}</p>
+            </div>
+          )}
+
+          {/* Past arguments history */}
           {results.length > 0 && (
             <div className="rounded-xl border border-gray-700 bg-gray-900 p-4 space-y-3">
               <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Your previous arguments</p>
@@ -274,13 +400,10 @@ export default function DebatePracticePage() {
                 {results.map((r, i) => {
                   const rIsAff = r.side === "aff";
                   const tagColor = rIsAff ? "text-purple-400" : "text-orange-400";
-                  const scoreColor =
-                    r.score >= 8 ? "text-green-400" : r.score >= 6 ? "text-yellow-400" : "text-red-400";
+                  const scoreColor = r.score >= 8 ? "text-green-400" : r.score >= 6 ? "text-yellow-400" : "text-red-400";
                   return (
                     <div key={i} className="flex gap-3 text-sm">
-                      <span className={`shrink-0 font-semibold ${tagColor}`}>
-                        {rIsAff ? "AFF" : "NEG"} R{r.round}
-                      </span>
+                      <span className={`shrink-0 font-semibold ${tagColor}`}>{rIsAff ? "AFF" : "NEG"} R{r.round}</span>
                       <span className="text-gray-300 flex-1">{r.transcript}</span>
                       <span className={`shrink-0 font-bold ${scoreColor}`}>{r.score}</span>
                     </div>
@@ -291,29 +414,22 @@ export default function DebatePracticePage() {
           )}
 
           <div className="flex flex-col items-center gap-6">
-            {/* Input mode toggle */}
             <div className="flex rounded-xl overflow-hidden border border-gray-700">
               <button
                 onClick={() => setInputMode("voice")}
-                className={`px-6 py-2 text-sm font-semibold transition-colors ${
-                  inputMode === "voice" ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-500 hover:text-gray-300"
-                }`}
+                className={`px-6 py-2 text-sm font-semibold transition-colors ${inputMode === "voice" ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-500 hover:text-gray-300"}`}
               >
                 🎙 Voice
               </button>
               <button
                 onClick={() => setInputMode("text")}
-                className={`px-6 py-2 text-sm font-semibold transition-colors ${
-                  inputMode === "text" ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-500 hover:text-gray-300"
-                }`}
+                className={`px-6 py-2 text-sm font-semibold transition-colors ${inputMode === "text" ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-500 hover:text-gray-300"}`}
               >
                 ✏️ Text
               </button>
               <button
                 onClick={() => { setInputMode("ai"); if (!hint && !hintLoading) fetchHint(); }}
-                className={`px-6 py-2 text-sm font-semibold transition-colors ${
-                  inputMode === "ai" ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-500 hover:text-gray-300"
-                }`}
+                className={`px-6 py-2 text-sm font-semibold transition-colors ${inputMode === "ai" ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-500 hover:text-gray-300"}`}
               >
                 💡 AI
               </button>
@@ -360,10 +476,7 @@ export default function DebatePracticePage() {
                   <div className="rounded-xl border border-yellow-800 bg-yellow-950 p-4 space-y-2">
                     <p className="text-xs text-yellow-500 font-semibold uppercase tracking-wide">Coach hint</p>
                     <p className="text-yellow-100 text-sm leading-relaxed">{hint}</p>
-                    <button
-                      onClick={fetchHint}
-                      className="text-xs text-yellow-600 hover:text-yellow-400 transition-colors pt-1"
-                    >
+                    <button onClick={fetchHint} className="text-xs text-yellow-600 hover:text-yellow-400 transition-colors pt-1">
                       Try another hint →
                     </button>
                   </div>
@@ -395,13 +508,11 @@ export default function DebatePracticePage() {
             <h2 className="text-2xl font-bold mt-1">Argument Rated</h2>
           </div>
 
-          {/* Transcript */}
           <div className="rounded-xl border border-gray-700 bg-gray-900 p-4">
             <p className="text-xs text-gray-500 mb-1">Your argument</p>
             <p className="text-sm text-gray-300 italic">&ldquo;{currentTranscript}&rdquo;</p>
           </div>
 
-          {/* Loading */}
           {isLoading && (
             <div className="flex flex-col items-center gap-3 py-8">
               <div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
@@ -409,58 +520,37 @@ export default function DebatePracticePage() {
             </div>
           )}
 
-          {/* Error */}
           {error && (
-            <div className="rounded-xl border border-red-700 bg-red-950 p-4 text-red-300 text-sm">
-              {error}
-            </div>
+            <div className="rounded-xl border border-red-700 bg-red-950 p-4 text-red-300 text-sm">{error}</div>
           )}
 
-          {/* Feedback */}
           {currentFeedback && !isLoading && (
             <div className="space-y-4">
-              {/* Score row */}
               <div className="rounded-2xl border border-gray-700 bg-gray-900 p-6 flex items-center justify-between">
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Overall Score</p>
                   <ScoreBadge score={currentFeedback.score} />
                 </div>
                 <div className="text-right space-y-1 text-sm">
-                  <div className="flex justify-end gap-3">
-                    <span className="text-gray-500">Relevance</span>
-                    <span className="text-white font-semibold w-6 text-right">
-                      {currentFeedback.criterion_scores.relevance}
-                    </span>
-                  </div>
-                  <div className="flex justify-end gap-3">
-                    <span className="text-gray-500">Reasoning</span>
-                    <span className="text-white font-semibold w-6 text-right">
-                      {currentFeedback.criterion_scores.reasoning}
-                    </span>
-                  </div>
-                  <div className="flex justify-end gap-3">
-                    <span className="text-gray-500">Clarity</span>
-                    <span className="text-white font-semibold w-6 text-right">
-                      {currentFeedback.criterion_scores.clarity}
-                    </span>
-                  </div>
+                  {(["relevance", "reasoning", "clarity"] as const).map((k) => (
+                    <div key={k} className="flex justify-end gap-3">
+                      <span className="text-gray-500 capitalize">{k}</span>
+                      <span className="text-white font-semibold w-6 text-right">{currentFeedback.criterion_scores[k]}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Summary */}
               <div className="rounded-xl border border-gray-700 bg-gray-900 p-4">
                 <p className="text-sm text-gray-300">{currentFeedback.summary}</p>
               </div>
 
-              {/* Strengths & Improvements */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="rounded-xl border border-green-800 bg-green-950 p-4 space-y-2">
                   <p className="text-xs text-green-400 font-semibold uppercase tracking-wide">Strengths</p>
                   <ul className="space-y-1">
                     {currentFeedback.strengths.map((s, i) => (
-                      <li key={i} className="text-sm text-green-200">
-                        • {s}
-                      </li>
+                      <li key={i} className="text-sm text-green-200">• {s}</li>
                     ))}
                   </ul>
                 </div>
@@ -468,9 +558,7 @@ export default function DebatePracticePage() {
                   <p className="text-xs text-amber-400 font-semibold uppercase tracking-wide">Improve</p>
                   <ul className="space-y-1">
                     {currentFeedback.improvements.map((imp, i) => (
-                      <li key={i} className="text-sm text-amber-200">
-                        • {imp}
-                      </li>
+                      <li key={i} className="text-sm text-amber-200">• {imp}</li>
                     ))}
                   </ul>
                 </div>
@@ -478,16 +566,156 @@ export default function DebatePracticePage() {
             </div>
           )}
 
-          {/* Next button */}
           {(currentFeedback || error) && !isLoading && (
-            <button
-              onClick={handleNext}
-              className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-colors text-lg"
-            >
-              {isLastTurn
-                ? "See Summary"
-                : `Next: ${nextTurn!.side === "aff" ? "AFF" : "NEG"} Round ${nextTurn!.round} →`}
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={handleRedo}
+                className="flex-1 py-4 border border-gray-600 bg-gray-900 hover:bg-gray-800 text-gray-300 font-bold rounded-xl transition-colors"
+              >
+                ↩ Redo This Round
+              </button>
+              <button
+                onClick={handleNext}
+                className="flex-1 py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-colors"
+              >
+                {isLastTurn ? "See Summary" : `Next: ${nextTurn!.side === "aff" ? "AFF" : "NEG"} R${nextTurn!.round} →`}
+              </button>
+            </div>
+          )}
+
+          <TurnIndicator current={turnIndex} />
+        </div>
+      </main>
+    );
+  }
+
+  // ── COMPARISON ───────────────────────────────────────────────────────────
+  if (stage === "comparison") {
+    const isAff = currentTurn.side === "aff";
+    const sideLabel = isAff ? "AFFIRMATIVE" : "NEGATIVE";
+    const labelColor = isAff ? "text-purple-400" : "text-orange-400";
+    const orig = originalForRedo;
+    const redo = redoFeedback;
+
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center p-8">
+        <div className="w-full max-w-3xl space-y-6">
+          <div className="text-center">
+            <p className={`text-xs uppercase tracking-widest font-semibold ${labelColor}`}>
+              Round {currentTurn.round} — {sideLabel}
+            </p>
+            <h2 className="text-2xl font-bold mt-1">Redo Comparison</h2>
+          </div>
+
+          {/* Redo loading */}
+          {isLoading && (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+              <p className="text-gray-400 text-sm">Rating your redo...</p>
+            </div>
+          )}
+
+          {/* Side-by-side once redo feedback is ready */}
+          {orig && redo && !isLoading && (
+            <>
+              {/* Score comparison */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-xl border border-gray-700 bg-gray-900 p-5 space-y-3">
+                  <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Original</p>
+                  <div>
+                    <ScoreBadge score={orig.feedback.score} />
+                  </div>
+                  <CriterionRow label="Relevance" original={orig.feedback.criterion_scores.relevance} redo={redo.criterion_scores.relevance} />
+                  <CriterionRow label="Reasoning" original={orig.feedback.criterion_scores.reasoning} redo={redo.criterion_scores.reasoning} />
+                  <CriterionRow label="Clarity" original={orig.feedback.criterion_scores.clarity} redo={redo.criterion_scores.clarity} />
+                </div>
+                <div className="rounded-xl border border-purple-700 bg-gray-900 p-5 space-y-3">
+                  <p className="text-xs text-purple-400 font-semibold uppercase tracking-wide">Redo</p>
+                  <div className="flex items-baseline gap-1">
+                    <ScoreBadge score={redo.score} />
+                    <ScoreDiff original={orig.feedback.score} redo={redo.score} />
+                  </div>
+                  <CriterionRow label="Relevance" original={orig.feedback.criterion_scores.relevance} redo={redo.criterion_scores.relevance} />
+                  <CriterionRow label="Reasoning" original={orig.feedback.criterion_scores.reasoning} redo={redo.criterion_scores.reasoning} />
+                  <CriterionRow label="Clarity" original={orig.feedback.criterion_scores.clarity} redo={redo.criterion_scores.clarity} />
+                </div>
+              </div>
+
+              {/* Summaries */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-xl border border-gray-700 bg-gray-900 p-4">
+                  <p className="text-xs text-gray-500 mb-2">Original analysis</p>
+                  <p className="text-sm text-gray-400">{orig.feedback.summary}</p>
+                </div>
+                <div className="rounded-xl border border-purple-800 bg-gray-900 p-4">
+                  <p className="text-xs text-purple-400 mb-2">Redo analysis</p>
+                  <p className="text-sm text-gray-300">{redo.summary}</p>
+                </div>
+              </div>
+
+              {/* Transcripts */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-xl border border-gray-700 bg-gray-900 p-4">
+                  <p className="text-xs text-gray-500 mb-2">Original argument</p>
+                  <p className="text-sm text-gray-500 italic">&ldquo;{orig.transcript}&rdquo;</p>
+                </div>
+                <div className="rounded-xl border border-purple-800 bg-gray-900 p-4">
+                  <p className="text-xs text-purple-400 mb-2">Redo argument</p>
+                  <p className="text-sm text-gray-300 italic">&ldquo;{redoTranscript}&rdquo;</p>
+                </div>
+              </div>
+
+              {/* AI comparison */}
+              {comparisonLoading && (
+                <div className="flex items-center gap-3 justify-center py-4">
+                  <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-gray-400 text-sm">Analyzing improvements...</p>
+                </div>
+              )}
+              {comparisonError && (
+                <p className="text-red-400 text-sm text-center">{comparisonError}</p>
+              )}
+              {comparison && !comparisonLoading && (
+                <div className="rounded-xl border border-blue-800 bg-blue-950 p-5 space-y-4">
+                  <p className="text-xs text-blue-400 font-semibold uppercase tracking-wide">What improved</p>
+
+                  {comparison.key_improvements.length > 0 && (
+                    <ul className="space-y-2">
+                      {comparison.key_improvements.map((item, i) => (
+                        <li key={i} className="flex gap-2 text-sm text-blue-100">
+                          <span className="text-green-400 shrink-0">▲</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {comparison.regressions.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-amber-400 font-semibold uppercase tracking-wide">Watch out</p>
+                      <ul className="space-y-1">
+                        {comparison.regressions.map((item, i) => (
+                          <li key={i} className="flex gap-2 text-sm text-amber-200">
+                            <span className="text-amber-400 shrink-0">▼</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <p className="text-sm text-blue-200 border-t border-blue-800 pt-3">{comparison.verdict}</p>
+                </div>
+              )}
+
+              <button
+                onClick={handleContinueFromComparison}
+                disabled={isLoading}
+                className="w-full py-4 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white font-bold rounded-xl transition-colors text-lg"
+              >
+                {isLastTurn ? "See Summary" : `Continue →`}
+              </button>
+            </>
           )}
 
           <TurnIndicator current={turnIndex} />
@@ -503,8 +731,7 @@ export default function DebatePracticePage() {
         <div className="text-center space-y-1">
           <h2 className="text-3xl font-bold">Practice Complete!</h2>
           <p className="text-gray-400">
-            Average score:{" "}
-            <span className="text-white font-bold text-xl">{avgScore}/10</span>
+            Average score: <span className="text-white font-bold text-xl">{avgScore}/10</span>
           </p>
         </div>
 
@@ -518,13 +745,7 @@ export default function DebatePracticePage() {
             const isAff = r.side === "aff";
             const borderColor = isAff ? "border-purple-800" : "border-orange-800";
             const labelColor = isAff ? "text-purple-400" : "text-orange-400";
-            const scoreColor =
-              r.score >= 8
-                ? "text-green-400"
-                : r.score >= 6
-                ? "text-yellow-400"
-                : "text-red-400";
-
+            const scoreColor = r.score >= 8 ? "text-green-400" : r.score >= 6 ? "text-yellow-400" : "text-red-400";
             return (
               <div key={i} className={`rounded-xl border ${borderColor} bg-gray-900 p-5 space-y-3`}>
                 <div className="flex items-center justify-between">
@@ -532,8 +753,7 @@ export default function DebatePracticePage() {
                     Round {r.round} — {isAff ? "Affirmative" : "Negative"}
                   </p>
                   <span className={`text-2xl font-bold ${scoreColor}`}>
-                    {r.score}
-                    <span className="text-sm text-gray-500">/10</span>
+                    {r.score}<span className="text-sm text-gray-500">/10</span>
                   </span>
                 </div>
                 <p className="text-gray-400 text-sm italic">&ldquo;{r.transcript}&rdquo;</p>
