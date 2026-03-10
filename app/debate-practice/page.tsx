@@ -91,6 +91,7 @@ export default function DebatePracticePage() {
   const [error, setError] = useState("");
   const [inputMode, setInputMode] = useState<"voice" | "text">("voice");
   const [textInput, setTextInput] = useState("");
+  const [recordingStarted, setRecordingStarted] = useState(false);
   const [hint, setHint] = useState("");
   const [hintLoading, setHintLoading] = useState(false);
   const [hintError, setHintError] = useState("");
@@ -147,6 +148,7 @@ export default function DebatePracticePage() {
       setCurrentTranscript("");
       setCurrentFeedback(null);
       setTextInput("");
+      setRecordingStarted(false);
       setHint("");
       setHintError("");
       setStage("recording");
@@ -328,7 +330,16 @@ export default function DebatePracticePage() {
             </div>
 
             {inputMode === "voice" ? (
-              <AudioRecorder onStop={(transcript) => handleRecordingDone(transcript)} />
+              recordingStarted ? (
+                <AudioRecorder onStop={(transcript) => handleRecordingDone(transcript)} />
+              ) : (
+                <button
+                  onClick={() => setRecordingStarted(true)}
+                  className="px-10 py-4 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-colors text-lg"
+                >
+                  🎙 Start Recording
+                </button>
+              )
             ) : (
               <div className="flex flex-col gap-3 w-full">
                 <textarea
