@@ -259,7 +259,6 @@ export default function DebatePracticePage() {
             <p className={`text-xs uppercase tracking-widest font-semibold ${labelColor}`}>
               Round {currentTurn.round} — {sideLabel}
             </p>
-            <h2 className="text-2xl font-bold">Your Turn</h2>
           </div>
 
           <div className={`rounded-2xl border ${borderColor} ${bgColor} p-5 space-y-2`}>
