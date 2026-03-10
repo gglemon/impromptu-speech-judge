@@ -448,7 +448,7 @@ export default function DebatePracticePage() {
                   onClick={() => setNumRounds(n)}
                   className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${numRounds === n ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-400 hover:text-white"}`}
                 >
-                  {n} rounds
+                  {n === 2 ? "Two arguments" : "Three arguments"}
                 </button>
               ))}
             </div>
