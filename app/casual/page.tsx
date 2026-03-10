@@ -7,7 +7,7 @@ import AudioPlayer from "@/components/AudioPlayer";
 import CasualFeedbackReport from "@/components/CasualFeedbackReport";
 import { casualTopics } from "@/lib/casualTopics";
 
-type Stage = "loading" | "topic" | "recording" | "processing" | "feedback";
+type Stage = "loading" | "topic" | "preview" | "recording" | "processing" | "feedback";
 
 interface CasualFeedback {
   score: number;
@@ -30,6 +30,47 @@ export default function CasualPage() {
   const [error, setError] = useState("");
   const [recordingStarted, setRecordingStarted] = useState(false);
   const [speechLength, setSpeechLength] = useState<number>(60);
+  const [aiExample, setAiExample] = useState("");
+  const [aiExampleLoading, setAiExampleLoading] = useState(false);
+  const [aiExampleError, setAiExampleError] = useState("");
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  function speakExample() {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(aiExample);
+    utt.rate = 0.92;
+    utt.onstart = () => setIsSpeaking(true);
+    utt.onend = () => setIsSpeaking(false);
+    utt.onerror = () => setIsSpeaking(false);
+    window.speechSynthesis.speak(utt);
+  }
+
+  function stopSpeaking() {
+    if (typeof window !== "undefined") window.speechSynthesis?.cancel();
+    setIsSpeaking(false);
+  }
+
+  async function handleShowExample() {
+    setAiExample("");
+    setAiExampleError("");
+    setAiExampleLoading(true);
+    setStage("preview");
+    try {
+      const res = await fetch("/api/casual-example", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ topic, speechLength }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      setAiExample(data.ai_example ?? "");
+    } catch (e: unknown) {
+      setAiExampleError(e instanceof Error ? e.message : "Could not generate example");
+    } finally {
+      setAiExampleLoading(false);
+    }
+  }
 
   // Pick a random topic immediately on mount
   useEffect(() => {
@@ -82,8 +123,13 @@ export default function CasualPage() {
           <div className="space-y-8 text-center">
             <div className="rounded-2xl bg-emerald-950 border border-emerald-700 p-8 space-y-4">
               <p className="text-emerald-300 text-sm font-medium uppercase tracking-wide">Your Topic</p>
-              <p className="text-3xl font-bold text-white leading-snug">{randomTopic}</p>
-              <div className="pt-1">
+              {!customTopic.trim() && (
+                <p className="text-3xl font-bold text-white leading-snug">{randomTopic}</p>
+              )}
+              <div className={customTopic.trim() ? "pt-0" : "pt-1"}>
+                {customTopic.trim() && (
+                  <p className="text-3xl font-bold text-white leading-snug mb-4">{customTopic.trim()}</p>
+                )}
                 <input
                   type="text"
                   value={customTopic}
@@ -120,7 +166,53 @@ export default function CasualPage() {
 
             <p className="text-gray-400">Take a breath, then press the button when you are ready to talk!</p>
             <button
-              onClick={() => setStage("recording")}
+              onClick={handleShowExample}
+              className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-lg rounded-xl transition-colors"
+            >
+              See Example &amp; Start 🎤
+            </button>
+          </div>
+        )}
+
+        {/* Preview: AI example speech */}
+        {stage === "preview" && (
+          <div className="space-y-6">
+            <div className="rounded-2xl bg-emerald-950 border border-emerald-700 p-5 text-center">
+              <p className="text-emerald-300 text-sm font-medium uppercase tracking-wide mb-1">Your Topic</p>
+              <p className="text-xl font-semibold text-white">{topic}</p>
+              <p className="text-emerald-400 text-xs mt-1">Target: {speechLength < 60 ? `${speechLength}s` : `${speechLength / 60} min`}</p>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-sm font-semibold text-gray-300 text-center">✨ AI Example Speech</p>
+              {aiExampleLoading ? (
+                <div className="flex items-center gap-3 py-8 justify-center">
+                  <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-gray-400 text-sm">Writing example...</p>
+                </div>
+              ) : aiExampleError ? (
+                <p className="text-red-400 text-sm text-center">{aiExampleError}</p>
+              ) : aiExample ? (
+                <div className="rounded-xl bg-gray-800 border border-gray-700 p-5 space-y-3">
+                  <div className="flex justify-end">
+                    {isSpeaking ? (
+                      <button onClick={stopSpeaking} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-900/60 border border-red-700 text-red-300 text-xs font-semibold">
+                        ■ Stop
+                      </button>
+                    ) : (
+                      <button onClick={speakExample} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-900/60 border border-blue-700 text-blue-300 text-xs font-semibold">
+                        ▶ Play
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-gray-200 text-sm leading-relaxed">{aiExample}</p>
+                </div>
+              ) : null}
+            </div>
+
+            <p className="text-gray-400 text-center text-sm">Read the example, then give your own speech!</p>
+            <button
+              onClick={() => { stopSpeaking(); setStage("recording"); }}
               className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-lg rounded-xl transition-colors"
             >
               Start Speaking 🎤
@@ -194,6 +286,8 @@ export default function CasualPage() {
               setAudioUrl("");
               setError("");
               setRecordingStarted(false);
+              setAiExample("");
+              setAiExampleError("");
               setStage("topic");
             }}
           />
