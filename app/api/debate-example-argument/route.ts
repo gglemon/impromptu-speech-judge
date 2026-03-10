@@ -17,6 +17,12 @@ export async function POST(req: NextRequest) {
     const sideLabel = side === "aff" ? "Affirmative (PRO)" : "Negative (CON)";
     const position = side === "aff" ? "support" : "oppose";
 
+    const languageGuide = difficulty === "easy"
+      ? "Write like a confident 3rd or 4th grader: very short sentences, simple everyday words, one concrete example from school or home. Sound enthusiastic, like a kid talking to classmates."
+      : difficulty === "hard"
+      ? "Write like a confident 7th grader or above: varied sentences, precise vocabulary, well-developed reasoning, persuasive rhetoric."
+      : "Write like a confident 5th or 6th grader: clear sentences, logical reasoning, a specific relatable example.";
+
     const improvementContext =
       improvements?.length > 0
         ? `\nThe student's argument had these areas to improve:\n${improvements.map((s: string) => `- ${s}`).join("\n")}\nMake sure the example argument addresses these weaknesses.`
@@ -34,7 +40,7 @@ Student's attempt:
 ${improvementContext}
 Build directly on the student's ideas. Keep any good points they made, but make them clearer and stronger.
 
-LANGUAGE: Write exactly like a confident 3rd or 4th grader speaks. Use very short sentences. Use simple, everyday words. Give one concrete example from school, home, or friends. Sound natural and enthusiastic, like a kid talking to classmates.
+LANGUAGE: ${languageGuide}
 
 LENGTH: 3-5 sentences only.
 

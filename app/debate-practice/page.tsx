@@ -1,18 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import AudioRecorder from "@/components/AudioRecorder";
-import { sparTopics } from "@/lib/sparTopics";
+import { getTopicsByDifficulty, type SparDifficulty } from "@/lib/sparTopics";
 
-const practiceTopics = [...sparTopics.easy, ...sparTopics.medium];
-
-function getRandomTopic(): string {
-  return practiceTopics[Math.floor(Math.random() * practiceTopics.length)];
-}
-
-function getTopicDifficulty(topic: string): "easy" | "medium" {
-  return sparTopics.easy.includes(topic) ? "easy" : "medium";
+function pickTopic(diff: SparDifficulty): string {
+  const pool = getTopicsByDifficulty(diff);
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 interface CriterionScores {
@@ -122,9 +117,10 @@ function advanceState(
 }
 
 export default function DebatePracticePage() {
-  const [topic, setTopic] = useState<string>(getRandomTopic);
+  const [topic, setTopic] = useState<string>(() => pickTopic("medium"));
   const [stage, setStage] = useState<Stage>("intro");
   const [turnIndex, setTurnIndex] = useState(0);
+  const [difficulty, setDifficulty] = useState<SparDifficulty>("medium");
   const [practiceMode, setPracticeMode] = useState<"solo" | "friend">("solo");
   const [userSide, setUserSide] = useState<"aff" | "neg">("aff");
   const [numRounds, setNumRounds] = useState(3);
@@ -156,9 +152,10 @@ export default function DebatePracticePage() {
   const [exampleLoading, setExampleLoading] = useState(false);
   const [exampleError, setExampleError] = useState("");
 
-  const difficulty = getTopicDifficulty(topic);
   const currentTurn = TURNS[turnIndex];
   const isLastTurn = turnIndex === numRounds * 2 - 1;
+
+  useEffect(() => { setTopic(pickTopic(difficulty)); }, [difficulty]);
 
   function resetTurnInputs() {
     setCurrentTranscript("");
@@ -187,6 +184,7 @@ export default function DebatePracticePage() {
         side: currentTurn.side,
         argument: transcript,
         round: currentTurn.round,
+        difficulty,
         previousArguments: results.map((r) => ({ side: r.side, round: r.round, transcript: r.transcript })),
       }),
     });
@@ -436,6 +434,27 @@ export default function DebatePracticePage() {
             </div>
             <p className="text-xs text-gray-500 pt-1">
               AI rates each argument on relevance, reasoning, and clarity. Use voice or text input.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-gray-300 text-center">Difficulty</p>
+            <div className="grid grid-cols-3 gap-2">
+              {(["easy", "medium", "hard"] as SparDifficulty[]).map(d => (
+                <button key={d} onClick={() => setDifficulty(d)}
+                  className={`py-2.5 rounded-xl text-sm font-semibold capitalize border transition-colors ${difficulty === d
+                    ? d === "easy" ? "bg-green-900 border-green-600 text-green-300"
+                      : d === "medium" ? "bg-yellow-900 border-yellow-600 text-yellow-300"
+                      : "bg-red-900 border-red-600 text-red-300"
+                    : "bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500"}`}>
+                  {d}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 text-center">
+              {difficulty === "easy" ? "3rd–4th grade · simple topics and language"
+                : difficulty === "medium" ? "5th–6th grade · reasoning and evidence"
+                : "7th grade+ · nuanced policy and philosophy"}
             </p>
           </div>
 

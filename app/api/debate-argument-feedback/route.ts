@@ -12,10 +12,16 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { resolution, side, argument, round, previousArguments } = await req.json();
+    const { resolution, side, argument, round, previousArguments, difficulty = "medium" } = await req.json();
 
     const sideLabel = side === "aff" ? "Affirmative (PRO)" : "Negative (CON)";
     const position = side === "aff" ? "support" : "oppose";
+
+    const languageGuide = difficulty === "easy"
+      ? "Write feedback for a 3rd or 4th grader: short sentences, simple words, warm and encouraging tone."
+      : difficulty === "hard"
+      ? "Write feedback for a 7th grade+ student: precise vocabulary, analytical tone, push them to think deeper."
+      : "Write feedback for a 5th or 6th grader: clear language, supportive but specific.";
 
     const previousContext =
       previousArguments?.length > 0
@@ -29,6 +35,8 @@ export async function POST(req: NextRequest) {
 
     const text = await callOllama(
       `You are an expert debate coach rating a student's argument in a practice debate.
+
+FEEDBACK LANGUAGE: ${languageGuide}
 
 Resolution: "${resolution}"
 Student's side: ${sideLabel} (they must ${position} the resolution)
