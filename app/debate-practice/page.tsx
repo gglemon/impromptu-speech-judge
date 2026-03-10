@@ -148,6 +148,11 @@ export default function DebatePracticePage() {
   const [comparisonLoading, setComparisonLoading] = useState(false);
   const [comparisonError, setComparisonError] = useState("");
 
+  // example argument
+  const [exampleArgument, setExampleArgument] = useState("");
+  const [exampleLoading, setExampleLoading] = useState(false);
+  const [exampleError, setExampleError] = useState("");
+
   const difficulty = getTopicDifficulty(topic);
   const currentTurn = TURNS[turnIndex];
   const isLastTurn = turnIndex === TURNS.length - 1;
@@ -166,6 +171,8 @@ export default function DebatePracticePage() {
     setRedoFeedback(null);
     setComparison(null);
     setComparisonError("");
+    setExampleArgument("");
+    setExampleError("");
   }
 
   async function fetchFeedback(transcript: string): Promise<ArgumentFeedback> {
@@ -281,6 +288,33 @@ export default function DebatePracticePage() {
     advanceState(isLastTurn, setTurnIndex, setStage, resetTurnInputs);
   }
 
+  async function fetchExampleArgument(feedback: ArgumentFeedback, transcript: string) {
+    setExampleArgument("");
+    setExampleError("");
+    setExampleLoading(true);
+    try {
+      const res = await fetch("/api/debate-example-argument", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resolution: topic,
+          side: currentTurn.side,
+          round: currentTurn.round,
+          difficulty,
+          userTranscript: transcript,
+          improvements: feedback.improvements,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      setExampleArgument(data.argument);
+    } catch (e) {
+      setExampleError(e instanceof Error ? e.message : "Could not generate example");
+    } finally {
+      setExampleLoading(false);
+    }
+  }
+
   async function fetchHint() {
     setHint("");
     setHintError("");
@@ -311,6 +345,53 @@ export default function DebatePracticePage() {
     results.length > 0
       ? (results.reduce((sum, r) => sum + r.score, 0) / results.length).toFixed(1)
       : null;
+
+  // email state
+  const [emailAddress, setEmailAddress] = useState("");
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailError, setEmailError] = useState("");
+
+  async function sendSummaryEmail() {
+    if (!emailAddress.trim()) return;
+    setEmailSending(true);
+    setEmailError("");
+    const body = [
+      `Debate Practice Summary`,
+      `Resolution: "${topic}"`,
+      `Average Score: ${avgScore}/10`,
+      ``,
+      ...results.map((r) =>
+        [
+          `--- ${r.side === "aff" ? "Affirmative" : "Negative"} Round ${r.round} ---`,
+          `Score: ${r.score}/10  (Relevance: ${r.criterion_scores.relevance}, Reasoning: ${r.criterion_scores.reasoning}, Clarity: ${r.criterion_scores.clarity})`,
+          `Argument: ${r.transcript}`,
+          `Analysis: ${r.summary}`,
+          `Strengths: ${r.strengths.join("; ")}`,
+          `Improvements: ${r.improvements.join("; ")}`,
+        ].join("\n")
+      ),
+    ].join("\n");
+
+    try {
+      const res = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: emailAddress.trim(),
+          subject: `Debate Practice: "${topic}"`,
+          text: body,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Email failed");
+      setEmailSent(true);
+    } catch (e) {
+      setEmailError(e instanceof Error ? e.message : "Could not send email");
+    } finally {
+      setEmailSending(false);
+    }
+  }
 
   // ── INTRO ────────────────────────────────────────────────────────────────
   if (stage === "intro") {
@@ -566,6 +647,33 @@ export default function DebatePracticePage() {
             </div>
           )}
 
+          {/* AI Example Argument */}
+          {currentFeedback && !isLoading && (
+            <div className="space-y-2">
+              {!exampleArgument && !exampleLoading && (
+                <button
+                  onClick={() => fetchExampleArgument(currentFeedback, currentTranscript)}
+                  className="w-full py-2.5 border border-blue-700 bg-blue-950 hover:bg-blue-900 text-blue-300 font-semibold rounded-xl transition-colors text-sm"
+                >
+                  ✨ See AI Example Argument
+                </button>
+              )}
+              {exampleLoading && (
+                <div className="flex items-center gap-3 justify-center py-4">
+                  <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-blue-400 text-sm">Drafting example...</p>
+                </div>
+              )}
+              {exampleError && <p className="text-red-400 text-xs text-center">{exampleError}</p>}
+              {exampleArgument && !exampleLoading && (
+                <div className="rounded-xl border border-blue-800 bg-blue-950 p-4 space-y-2">
+                  <p className="text-xs text-blue-400 font-semibold uppercase tracking-wide">AI Example Argument</p>
+                  <p className="text-blue-100 text-sm leading-relaxed">{exampleArgument}</p>
+                </div>
+              )}
+            </div>
+          )}
+
           {(currentFeedback || error) && !isLoading && (
             <div className="flex gap-3">
               <button
@@ -766,6 +874,32 @@ export default function DebatePracticePage() {
               </div>
             );
           })}
+        </div>
+
+        {/* Email summary */}
+        <div className="rounded-xl border border-gray-700 bg-gray-900 p-4 space-y-3">
+          <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Email Summary</p>
+          {emailSent ? (
+            <p className="text-green-400 text-sm text-center">Summary sent!</p>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                type="email"
+                value={emailAddress}
+                onChange={(e) => setEmailAddress(e.target.value)}
+                placeholder="Enter email address"
+                className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:border-purple-500"
+              />
+              <button
+                onClick={sendSummaryEmail}
+                disabled={emailSending || !emailAddress.trim()}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white font-semibold rounded-xl transition-colors text-sm shrink-0"
+              >
+                {emailSending ? "Sending..." : "Send"}
+              </button>
+            </div>
+          )}
+          {emailError && <p className="text-red-400 text-xs">{emailError}</p>}
         </div>
 
         <div className="flex gap-4">
