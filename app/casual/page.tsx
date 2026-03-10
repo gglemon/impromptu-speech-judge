@@ -25,6 +25,7 @@ export default function CasualPage() {
   const [feedback, setFeedback] = useState<CasualFeedback | null>(null);
   const [error, setError] = useState("");
   const [recordingStarted, setRecordingStarted] = useState(false);
+  const [speechLength, setSpeechLength] = useState<number>(60);
 
   // Pick a random topic immediately on mount
   useEffect(() => {
@@ -42,7 +43,7 @@ export default function CasualPage() {
       const res = await fetch("/api/casual-feedback", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ topic, transcript }),
+        body: JSON.stringify({ topic, transcript, speechLength }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Feedback failed");
@@ -79,6 +80,31 @@ export default function CasualPage() {
               <p className="text-emerald-300 text-sm font-medium uppercase tracking-wide">Your Topic</p>
               <p className="text-3xl font-bold text-white leading-snug">{topic}</p>
             </div>
+
+            <div className="space-y-3">
+              <p className="text-gray-400 text-sm">How long do you want to speak?</p>
+              <div className="flex gap-2 justify-center">
+                {[
+                  { label: "30 sec", value: 30 },
+                  { label: "1 min", value: 60 },
+                  { label: "1.5 min", value: 90 },
+                  { label: "2 min", value: 120 },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setSpeechLength(opt.value)}
+                    className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${
+                      speechLength === opt.value
+                        ? "bg-emerald-600 border-emerald-500 text-white"
+                        : "bg-gray-900 border-gray-700 text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <p className="text-gray-400">Take a breath, then press the button when you are ready to talk!</p>
             <button
               onClick={() => setStage("recording")}
@@ -95,6 +121,7 @@ export default function CasualPage() {
             <div className="rounded-2xl bg-emerald-950 border border-emerald-700 p-6 text-center">
               <p className="text-emerald-300 text-sm font-medium uppercase tracking-wide mb-2">Your Topic</p>
               <p className="text-xl font-semibold text-white">{topic}</p>
+              <p className="text-emerald-400 text-xs mt-2">Target: {speechLength < 60 ? `${speechLength}s` : `${speechLength / 60} min`}</p>
             </div>
             {recordingStarted ? (
               <AudioRecorder onStop={handleStop} />
