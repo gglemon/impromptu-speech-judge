@@ -453,7 +453,7 @@ export default function DebatePracticePage() {
               ))}
             </div>
             <p className="text-xs text-gray-500 text-center">
-              {numRounds === 2 ? "4 total arguments (AFF×2 + NEG×2)" : "6 total arguments (AFF×3 + NEG×3)"}
+              {numRounds === 2 ? "4 total arguments (AFF×2 + NEG×2)" : ""}
             </p>
           </div>
 
