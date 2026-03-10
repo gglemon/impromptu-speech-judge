@@ -17,18 +17,13 @@ export async function POST(req: NextRequest) {
     const sideLabel = side === "aff" ? "Affirmative (PRO)" : "Negative (CON)";
     const position = side === "aff" ? "support" : "oppose";
 
-    const languageGuide =
-      difficulty === "easy"
-        ? "Write like a confident 3rd or 4th grader. Use short sentences, simple words, and fun everyday examples from school, home, or friends. Keep it clear and easy to follow."
-        : "Write like a confident 5th or 6th grader. Use clear reasoning, give a specific example or two, and keep it well-organized but easy to understand.";
-
     const improvementContext =
       improvements?.length > 0
         ? `\nThe student's argument had these areas to improve:\n${improvements.map((s: string) => `- ${s}`).join("\n")}\nMake sure the example argument addresses these weaknesses.`
         : "";
 
     const text = await callOllama(
-      `You are a debate coach writing a strong example argument for a student to learn from.
+      `You are a debate coach. Write a short example argument for a student to learn from.
 
 Resolution: "${resolution}"
 Side: ${sideLabel} (must ${position} the resolution)
@@ -37,17 +32,19 @@ Round: ${round} of 3
 Student's attempt:
 "${userTranscript}"
 ${improvementContext}
+Build directly on the student's ideas. Keep any good points they made, but make them clearer and stronger.
 
-Write ONE strong example argument for the ${sideLabel} side. Build directly on the student's ideas — keep any good points they made, but make them clearer, stronger, and better supported. This is a model argument the student can study and learn from.
+LANGUAGE: Write exactly like a confident 3rd or 4th grader speaks. Use very short sentences. Use simple, everyday words. Give one concrete example from school, home, or friends. Sound natural and enthusiastic, like a kid talking to classmates.
 
-${languageGuide}
+LENGTH: 3-5 sentences only.
 
-Keep it to 3-5 sentences. Write it as a natural spoken argument, not a list. Do not include any preamble, labels, or explanations — just the argument itself.`,
+OUTPUT RULE: Output ONLY the argument itself. No intro, no label, no explanation, no "Here is", no "Sure", no "Ok". Start directly with the argument.`,
       req.signal
     );
 
     const argument = text
       .replace(/<think>[\s\S]*?<\/think>/g, "")
+      .replace(/^(sure[,!.]?|ok[,!.]?|of course[,!.]?|here('s| is)[^.]*[.!]|let me[^.]*[.!]|i('ll| will)[^.]*[.!])\s*/i, "")
       .trim();
 
     return NextResponse.json({ argument });
