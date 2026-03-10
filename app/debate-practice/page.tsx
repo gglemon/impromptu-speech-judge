@@ -125,6 +125,8 @@ export default function DebatePracticePage() {
   const [topic] = useState<string>(getRandomTopic);
   const [stage, setStage] = useState<Stage>("intro");
   const [turnIndex, setTurnIndex] = useState(0);
+  const [practiceMode, setPracticeMode] = useState<"solo" | "friend">("solo");
+  const [userSide, setUserSide] = useState<"aff" | "neg">("aff");
   const [currentTranscript, setCurrentTranscript] = useState("");
   const [currentFeedback, setCurrentFeedback] = useState<ArgumentFeedback | null>(null);
   const [results, setResults] = useState<ArgumentResult[]>([]);
@@ -430,6 +432,43 @@ export default function DebatePracticePage() {
             </p>
           </div>
 
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-gray-300 text-center">Practice Mode</p>
+            <div className="flex rounded-xl overflow-hidden border border-gray-700">
+              <button
+                onClick={() => setPracticeMode("solo")}
+                className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${practiceMode === "solo" ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-400 hover:text-white"}`}
+              >
+                🧑 Solo
+              </button>
+              <button
+                onClick={() => setPracticeMode("friend")}
+                className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${practiceMode === "friend" ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-400 hover:text-white"}`}
+              >
+                👥 With a Friend
+              </button>
+            </div>
+            {practiceMode === "friend" && (
+              <div className="space-y-2">
+                <p className="text-xs text-gray-500 text-center">Which side will YOU argue?</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setUserSide("aff")}
+                    className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors ${userSide === "aff" ? "bg-purple-900 border-purple-600 text-purple-300" : "bg-gray-900 border-gray-700 text-gray-400 hover:text-white"}`}
+                  >
+                    Affirmative (PRO)
+                  </button>
+                  <button
+                    onClick={() => setUserSide("neg")}
+                    className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors ${userSide === "neg" ? "bg-orange-900 border-orange-600 text-orange-300" : "bg-gray-900 border-gray-700 text-gray-400 hover:text-white"}`}
+                  >
+                    Negative (CON)
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           <button
             onClick={() => setStage("recording")}
             className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-colors text-lg"
@@ -458,6 +497,14 @@ export default function DebatePracticePage() {
               Round {currentTurn.round} — {sideLabel}{isRedoing ? " — REDO" : ""}
             </p>
           </div>
+
+          {/* Friend mode: pass device banner */}
+          {practiceMode === "friend" && currentTurn.side !== userSide && !isRedoing && (
+            <div className="rounded-xl border border-purple-700 bg-purple-950/50 p-4 text-center space-y-1">
+              <p className="text-purple-300 font-semibold">Pass device to your friend</p>
+              <p className="text-purple-400 text-xs">Friend argues the {isAff ? "Affirmative" : "Negative"} side</p>
+            </div>
+          )}
 
           <div className={`rounded-2xl border ${borderColor} ${bgColor} p-5 space-y-2`}>
             <p className="text-xs text-gray-400">{instruction}:</p>

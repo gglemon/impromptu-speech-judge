@@ -190,6 +190,8 @@ export default function SparPage() {
   const [userName, setUserName] = useState("");
   const [userSide, setUserSide] = useState<"aff" | "neg">("aff");
   const [resolution, setResolution] = useState("");
+  const [opponentMode, setOpponentMode] = useState<"ai" | "friend">("ai");
+  const opponentModeRef = useRef<"ai" | "friend">("ai");
 
   const [topicOptions, setTopicOptions] = useState<string[]>(() => pickTopicOptions("medium"));
   const [selectedTopic, setSelectedTopic] = useState<string>("");
@@ -248,6 +250,7 @@ export default function SparPage() {
   useEffect(() => { recordingsRef.current = recordings; }, [recordings]);
   useEffect(() => { resolutionRef.current = resolution; }, [resolution]);
   useEffect(() => { difficultyRef.current = difficulty; }, [difficulty]);
+  useEffect(() => { opponentModeRef.current = opponentMode; }, [opponentMode]);
   useEffect(() => {
     const opts = pickTopicOptions(difficulty);
     setTopicOptions(opts);
@@ -335,7 +338,7 @@ export default function SparPage() {
     setRecordings(prev => ({ ...prev, crossfire: { transcript: cfTranscript } }));
     // Start generating AI rebuttal based on what the user actually said
     const ai = aiDataRef.current;
-    if (ai) {
+    if (ai && opponentModeRef.current === "ai") {
       setAiRebuttalGenerating(true);
       fetch("/api/spar-rebuttal", {
         method: "POST",
@@ -424,6 +427,7 @@ export default function SparPage() {
     setError(""); setAiGenerateError("");
     const chosenResolution = selectedTopic || topicOptions[0];
     const randomSide: "aff" | "neg" = Math.random() < 0.5 ? "aff" : "neg";
+    const opponentSide: "aff" | "neg" = randomSide === "aff" ? "neg" : "aff";
     setResolution(chosenResolution); resolutionRef.current = chosenResolution;
     setUserSide(randomSide);
     setAiData(null); aiDataRef.current = null;
@@ -436,18 +440,25 @@ export default function SparPage() {
       if (prepPausedRef.current) return;
       setPrepRemaining(prev => { if (prev <= 1) { clearInterval(prepTimerRef.current!); prepTimerRef.current = null; return 0; } return prev - 1; });
     }, 1000);
-    // Fire both in parallel so hints are ready right after AI speech
     fetch("/api/spar-prep-hints", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ resolution: chosenResolution, userSide: randomSide, difficulty: difficultyRef.current }), signal })
       .then(r => r.json()).then(d => setPrepHints(d)).catch(() => {}).finally(() => setPrepHintsLoading(false));
-    try {
-      const res = await fetch("/api/spar-generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ resolution: chosenResolution, userSide: randomSide, difficulty: difficultyRef.current }), signal });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Generation failed");
-      setAiData(data); aiDataRef.current = data;
-    } catch (e: unknown) {
-      if (e instanceof Error && e.name === "AbortError") return;
-      setAiGenerateError(e instanceof Error ? e.message : "Failed to generate AI speeches");
-    } finally { setAiGenerating(false); }
+
+    if (opponentModeRef.current === "friend") {
+      // In friend mode: no AI generation — set placeholder so the rest of the app works
+      const placeholder: AiData = { ai_constructive: "", ai_rebuttal: "", aiSide: opponentSide };
+      setAiData(placeholder); aiDataRef.current = placeholder;
+      setAiGenerating(false);
+    } else {
+      try {
+        const res = await fetch("/api/spar-generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ resolution: chosenResolution, userSide: randomSide, difficulty: difficultyRef.current }), signal });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? "Generation failed");
+        setAiData(data); aiDataRef.current = data;
+      } catch (e: unknown) {
+        if (e instanceof Error && e.name === "AbortError") return;
+        setAiGenerateError(e instanceof Error ? e.message : "Failed to generate AI speeches");
+      } finally { setAiGenerating(false); }
+    }
   };
 
   const startSpeechPhases = useCallback(() => {
@@ -465,7 +476,7 @@ export default function SparPage() {
       if (phase.id === "aff_rebuttal" || phase.id === "neg_rebuttal") return { ...prev, rebuttal: rec };
       return prev;
     });
-    if (phase.id === "aff_constructive" || phase.id === "neg_constructive") {
+    if ((phase.id === "aff_constructive" || phase.id === "neg_constructive") && opponentModeRef.current === "ai") {
       setCrossfireGenerating(true); setCrossfireQuestions(null); crossfireQRef.current = null;
       const ai = aiDataRef.current;
       const aiSide = ai?.aiSide ?? (userSide === "aff" ? "neg" : "aff");
@@ -528,6 +539,23 @@ export default function SparPage() {
             <Link href="/" className="text-gray-500 text-sm hover:text-gray-300 transition-colors">← Back</Link>
             <h1 className="text-3xl font-bold text-white">SPAR Debate</h1>
             <p className="text-gray-400">You&apos;ll be assigned a random topic and side to debate against an AI opponent.</p>
+          </div>
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-gray-300 text-center">Opponent</p>
+            <div className="flex rounded-xl overflow-hidden border border-gray-700">
+              <button
+                onClick={() => setOpponentMode("ai")}
+                className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${opponentMode === "ai" ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-400 hover:text-white"}`}
+              >
+                🤖 vs AI
+              </button>
+              <button
+                onClick={() => setOpponentMode("friend")}
+                className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${opponentMode === "friend" ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-400 hover:text-white"}`}
+              >
+                👥 vs Friend
+              </button>
+            </div>
           </div>
           <div className="space-y-3">
             <p className="text-sm font-medium text-gray-300 text-center">Difficulty</p>
@@ -604,7 +632,7 @@ export default function SparPage() {
             {/* Row 2 & 3: side badges */}
             <div className="flex gap-2 border-t border-blue-800/40 pt-3">
               <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${userSide === "neg" ? "bg-green-900 text-green-300 border-green-700" : "bg-red-900 text-red-300 border-red-700"}`}>
-                AI · {userSide === "neg" ? "Aff" : "Neg"}
+                {opponentMode === "friend" ? "Friend" : "AI"} · {userSide === "neg" ? "Aff" : "Neg"}
               </span>
               <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${userSide === "aff" ? "bg-green-900 text-green-300 border-green-700" : "bg-red-900 text-red-300 border-red-700"}`}>
                 You · {userSide === "aff" ? "Aff" : "Neg"}
@@ -612,9 +640,9 @@ export default function SparPage() {
             </div>
           </div>
           <div className="flex items-center justify-center gap-2 text-sm h-5">
-            {aiGenerating ? (<><div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" /><span className="text-gray-400">Generating AI speeches...</span></>) :
+            {opponentMode === "ai" && (aiGenerating ? (<><div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" /><span className="text-gray-400">Generating AI speeches...</span></>) :
               aiGenerateError ? <span className="text-red-400 text-xs">{aiGenerateError}</span> :
-              aiData ? <span className="text-green-400 text-xs">AI speeches ready</span> : null}
+              aiData ? <span className="text-green-400 text-xs">AI speeches ready</span> : null)}
           </div>
 
           {/* Timer — click to pause/resume */}
@@ -720,6 +748,60 @@ export default function SparPage() {
     const phase = PHASES[phaseIndex];
     const isUserPhase = phase.side === userSide;
     const aiSpeechText = (phase.id === "aff_rebuttal" || phase.id === "neg_rebuttal") ? aiData?.ai_rebuttal : aiData?.ai_constructive;
+
+    // ── Crossfire: 6 exchanges, 3 questions per side ─────────────────────────
+    if (phase.id === "crossfire" && opponentMode === "friend") {
+      const questioner = exchangeQuestioner(cfExchangeIdx);
+      const responder: "aff" | "neg" = questioner === "aff" ? "neg" : "aff";
+      const currentSpeaker = cfSubPhase === "question" ? questioner : responder;
+      const exchangeNum = Math.floor(cfExchangeIdx / 2) + 1;
+      const isUserSpeaker = currentSpeaker === userSide;
+      const speakerLabel = currentSpeaker === "aff" ? "Affirmative" : "Negative";
+
+      const handleFriendCfSubmit = (text: string) => {
+        if (cfSubPhase === "question") {
+          cfTranscriptsRef.current.push(`[Q${exchangeNum}] ${speakerLabel} asks: ${text}`);
+          setCfCurrentQuestion(text);
+          setCfSubPhase("response");
+        } else {
+          const respLabel = responder === "aff" ? "Affirmative" : "Negative";
+          cfTranscriptsRef.current.push(`[Q${exchangeNum}] ${respLabel} responds: ${text}`);
+          const next = cfExchangeIdx + 1;
+          if (next >= CF_EXCHANGES) { endCrossfire(); return; }
+          setCfExchangeIdx(next);
+          setCfSubPhase("question");
+          resetCfExchange();
+        }
+      };
+
+      return (
+        <main className="min-h-screen flex flex-col items-center justify-center p-8">
+          <div className="w-full max-w-xl space-y-5">
+            <TopicBanner resolution={resolution} userSide={userSide} />
+            <div className="text-center space-y-1">
+              <p className="text-xs text-gray-500 uppercase tracking-widest font-medium">
+                Cross-Fire · Question {exchangeNum} of 3
+              </p>
+              <h2 className="text-2xl font-bold text-white">
+                {cfSubPhase === "question" ? `${speakerLabel} Asks` : `${responder === "aff" ? "Affirmative" : "Negative"} Responds`}
+              </h2>
+            </div>
+            <div className="rounded-xl border border-purple-800/50 bg-purple-950/30 p-4 text-center">
+              <p className="text-purple-300 text-sm font-medium">
+                {isUserSpeaker ? "Your turn" : `Pass device to ${speakerLabel} (Friend)`}
+              </p>
+              {cfSubPhase === "response" && cfCurrentQuestion && (
+                <p className="text-gray-400 text-xs mt-2 italic">&ldquo;{cfCurrentQuestion}&rdquo;</p>
+              )}
+            </div>
+            <RecorderWithTextFallback onSubmit={handleFriendCfSubmit} />
+            <button onClick={endCrossfire} className="w-full py-2 text-xs font-medium text-gray-500 hover:text-gray-300 hover:bg-gray-800/50 border border-gray-700/50 rounded-xl transition-colors">
+              Skip Crossfire →
+            </button>
+          </div>
+        </main>
+      );
+    }
 
     // ── Crossfire: 6 exchanges, 3 questions per side ─────────────────────────
     if (phase.id === "crossfire") {
@@ -997,6 +1079,24 @@ export default function SparPage() {
                 </div>
               )}
               <RecorderWithTextFallback onSubmit={(text) => handleUserSpeechStop(text, 0)} />
+            </div>
+          ) : opponentMode === "friend" ? (
+            /* Friend records their constructive/rebuttal */
+            <div className="space-y-4">
+              <div className="rounded-xl border border-purple-800/50 bg-purple-950/30 p-4 text-center">
+                <p className="text-purple-300 font-medium text-sm">Pass device to Friend ({userSide === "aff" ? "Negative" : "Affirmative"} side)</p>
+                <p className="text-gray-400 text-xs mt-1">Friend records their {phase.id.includes("rebuttal") ? "rebuttal" : "constructive"} speech</p>
+              </div>
+              <RecorderWithTextFallback onSubmit={(text) => {
+                if (phase.id === "aff_constructive" || phase.id === "neg_constructive") {
+                  const updated = aiDataRef.current ? { ...aiDataRef.current, ai_constructive: text } : { ai_constructive: text, aiSide: (userSide === "aff" ? "neg" : "aff") as "aff" | "neg" };
+                  setAiData(updated); aiDataRef.current = updated;
+                } else if (phase.id === "aff_rebuttal" || phase.id === "neg_rebuttal") {
+                  const updated = aiDataRef.current ? { ...aiDataRef.current, ai_rebuttal: text } : null;
+                  if (updated) { setAiData(updated); aiDataRef.current = updated; }
+                }
+                advancePhase(phaseIndex + 1);
+              }} />
             </div>
           ) : (
             <>
