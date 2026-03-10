@@ -3,7 +3,7 @@ import { callOllama } from "@/lib/ollama";
 
 export async function POST(req: NextRequest) {
   try {
-    const { resolution, aiSide, aiConstructive, question, difficulty = "medium" } = await req.json();
+    const { resolution, aiSide, aiConstructive, question, difficulty = "medium", aiDifficulty = "medium" } = await req.json();
     const aiSideLabel = aiSide === "aff" ? "Affirmative" : "Negative";
     const languageStyle = difficulty === "easy"
       ? "Respond as a 3rd or 4th grade student would speak: simple words, short sentences, concrete everyday examples."
@@ -28,10 +28,11 @@ Your opponent just asked you this crossfire question:
 ${question}
 """
 
-Give a concise, direct response (3-5 sentences) that:
-- Defends your position
-- Directly addresses their question
-- Exposes a weakness in their implied assumption if possible
+${aiDifficulty === "easy"
+  ? "Give a somewhat weak response (3-5 sentences). Admit some uncertainty on at least one point, partially dodge the question, or leave a logical gap the opponent can exploit."
+  : aiDifficulty === "hard"
+  ? "Give the sharpest, most direct response possible (3-5 sentences). Fully defend your position, address every part of the question, and if possible turn it back on your opponent."
+  : "Give a concise, direct response (3-5 sentences) that defends your position and directly addresses their question."}
 
 Return ONLY valid JSON (no markdown, no code blocks, no thinking tags):
 { "response": "<your spoken response, 3-5 sentences>" }`

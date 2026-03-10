@@ -3,7 +3,7 @@ import { callOllama } from "@/lib/ollama";
 
 export async function POST(req: NextRequest) {
   try {
-    const { resolution, aiSide, aiConstructive, userConstructive, difficulty = "medium" } = await req.json();
+    const { resolution, aiSide, aiConstructive, userConstructive, difficulty = "medium", aiDifficulty = "medium" } = await req.json();
     const languageStyle = difficulty === "easy"
       ? "Use language a 3rd or 4th grade student would understand: simple words, short direct questions, concrete examples."
       : difficulty === "medium"
@@ -28,7 +28,11 @@ Your opponent just delivered this constructive speech:
 ${userConstructive || "(No speech recorded)"}
 """
 
-Generate 3 sharp, targeted crossfire questions that directly challenge the specific arguments, evidence, or claims your opponent made. Each question should:
+${aiDifficulty === "easy"
+  ? "Generate 3 crossfire questions. At least one should be easy to deflect or based on a weak assumption. Don't always target the strongest points. Leave some room for the opponent to recover."
+  : aiDifficulty === "hard"
+  ? "Generate 3 sharp, incisive crossfire questions that directly target the weakest points in their argument. Make them difficult to dodge."
+  : "Generate 3 targeted crossfire questions that directly challenge the specific arguments, evidence, or claims your opponent made."} Each question should:
 - Reference something the opponent actually said (or note if they gave no speech)
 - Expose a weakness, contradiction, or missing evidence in their argument
 - Optionally connect back to one of your own constructive arguments

@@ -9,16 +9,22 @@ function getLanguageStyle(difficulty: string): string {
 
 export async function POST(req: NextRequest) {
   try {
-    const { resolution, userSide, difficulty = "medium" } = await req.json();
+    const { resolution, userSide, difficulty = "medium", aiDifficulty = "medium" } = await req.json();
     const aiSide = userSide === "aff" ? "Negative" : "Affirmative";
     const aiSideShort = userSide === "aff" ? "neg" : "aff";
     const voteDirection = aiSide === "Affirmative" ? "for" : "against";
     const languageStyle = getLanguageStyle(difficulty);
+    const aiStrengthGuide = aiDifficulty === "easy"
+      ? "IMPORTANT: Deliberately make a somewhat weak argument. Leave at least one obvious logical gap or unsupported claim the opponent can exploit. Use vague or unconvincing reasoning for at least one of your three arguments. Make it beatable but not absurd."
+      : aiDifficulty === "hard"
+      ? "IMPORTANT: Make the strongest possible argument. Use airtight logic, anticipate counterarguments, and leave no obvious weaknesses."
+      : "";
 
     const text = await callOllama(
       `You are a competitive debater arguing the ${aiSide} side of this resolution.
 
 LANGUAGE STYLE: ${languageStyle}
+${aiStrengthGuide ? `\n${aiStrengthGuide}\n` : ""}
 
 Resolution: ${resolution}
 

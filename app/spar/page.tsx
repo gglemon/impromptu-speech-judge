@@ -184,6 +184,46 @@ function pickTopicOptions(diff: SparDifficulty): string[] {
   return shuffled.slice(0, 3);
 }
 
+function TransitionCountdown({ onDone }: { onDone: () => void }) {
+  const [count, setCount] = useState(10);
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    timerRef.current = setInterval(() => {
+      setCount(c => {
+        if (c <= 1) {
+          clearInterval(timerRef.current!);
+          timerRef.current = null;
+          onDoneRef.current();
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, []); // eslint-disable-line
+
+  function handleSkip() {
+    if (timerRef.current) clearInterval(timerRef.current);
+    onDoneRef.current();
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-6">
+      <div className="relative w-24 h-24 flex items-center justify-center">
+        <div className="absolute inset-0 rounded-full border-4 border-blue-900" />
+        <div className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin" style={{ animationDuration: "1s" }} />
+        <span className="text-4xl font-bold text-white">{count}</span>
+      </div>
+      <button onClick={handleSkip} className="text-sm text-gray-500 hover:text-gray-300 transition-colors">
+        Start Now →
+      </button>
+    </div>
+  );
+}
+
 export default function SparPage() {
   const [stage, setStage] = useState<Stage>("setup");
   const [difficulty, setDifficulty] = useState<SparDifficulty>("medium");
@@ -192,6 +232,13 @@ export default function SparPage() {
   const [resolution, setResolution] = useState("");
   const [opponentMode, setOpponentMode] = useState<"ai" | "friend">("ai");
   const opponentModeRef = useRef<"ai" | "friend">("ai");
+
+  const [autoPlayAudio, setAutoPlayAudio] = useState(false);
+  const autoPlayAudioRef = useRef(false);
+  const [aiDifficulty, setAiDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  const aiDifficultyRef = useRef<"easy" | "medium" | "hard">("medium");
+  const [transitionData, setTransitionData] = useState<{ nextPhaseIdx: number; label: string } | null>(null);
+  const userSideRef = useRef<"aff" | "neg">("aff");
 
   const [topicOptions, setTopicOptions] = useState<string[]>(() => pickTopicOptions("medium"));
   const [selectedTopic, setSelectedTopic] = useState<string>("");
@@ -251,6 +298,10 @@ export default function SparPage() {
   useEffect(() => { resolutionRef.current = resolution; }, [resolution]);
   useEffect(() => { difficultyRef.current = difficulty; }, [difficulty]);
   useEffect(() => { opponentModeRef.current = opponentMode; }, [opponentMode]);
+  useEffect(() => { autoPlayAudioRef.current = autoPlayAudio; }, [autoPlayAudio]);
+  useEffect(() => { aiDifficultyRef.current = aiDifficulty; }, [aiDifficulty]);
+  useEffect(() => { userSideRef.current = userSide; }, [userSide]);
+
   useEffect(() => {
     const opts = pickTopicOptions(difficulty);
     setTopicOptions(opts);
@@ -259,6 +310,28 @@ export default function SparPage() {
   }, [difficulty]);
 
   const { isSpeaking, speak, stop } = useTTS();
+
+  // Auto-play AI constructive/rebuttal when entering AI phase
+  useEffect(() => {
+    if (!autoPlayAudioRef.current || stage !== "speech" || transitionData !== null) return;
+    const phase = PHASES[phaseIndex];
+    if (phase.side === userSide || phase.id === "crossfire") return;
+    const text = phase.id.includes("rebuttal") ? aiData?.ai_rebuttal : aiData?.ai_constructive;
+    if (text) speak(text);
+  }, [phaseIndex, stage, transitionData, aiData?.ai_constructive, aiData?.ai_rebuttal, userSide, speak]);
+
+  // Auto-play AI crossfire question
+  useEffect(() => {
+    const currentAiQuestion = crossfireQuestions?.[aiQuestionIdx(cfExchangeIdx)];
+    if (!autoPlayAudioRef.current || !currentAiQuestion) return;
+    speak(currentAiQuestion);
+  }, [crossfireQuestions, cfExchangeIdx, speak]);
+
+  // Auto-play AI crossfire response
+  useEffect(() => {
+    if (!autoPlayAudioRef.current || !cfAiResponse) return;
+    speak(cfAiResponse);
+  }, [cfAiResponse, speak]);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
@@ -285,8 +358,14 @@ export default function SparPage() {
     stop();
     clearTimer();
     if (nextIndex >= PHASES.length) { setStage("processing"); return; }
-    setPhaseIndex(nextIndex);
-    startPhaseTimer(PHASES[nextIndex].seconds);
+    const nextPhase = PHASES[nextIndex];
+    if (nextPhase.side === userSideRef.current) {
+      // Show 10-second transition countdown before user's turn
+      setTransitionData({ nextPhaseIdx: nextIndex, label: nextPhase.label });
+    } else {
+      setPhaseIndex(nextIndex);
+      startPhaseTimer(nextPhase.seconds);
+    }
   }, [stop, clearTimer, startPhaseTimer]);
 
   // Initialize crossfire when entering phase 2
@@ -350,6 +429,7 @@ export default function SparPage() {
           userConstructive: recordingsRef.current.constructive?.transcript ?? "",
           userCrossfire: cfTranscript,
           difficulty: difficultyRef.current,
+          aiDifficulty: aiDifficultyRef.current,
         }),
         signal: abortRef.current?.signal,
       })
@@ -383,6 +463,7 @@ export default function SparPage() {
         aiConstructive: ai?.ai_constructive ?? "",
         question: transcript,
         difficulty: difficultyRef.current,
+        aiDifficulty: aiDifficultyRef.current,
       }),
     })
       .then(r => r.json())
@@ -450,7 +531,7 @@ export default function SparPage() {
       setAiGenerating(false);
     } else {
       try {
-        const res = await fetch("/api/spar-generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ resolution: chosenResolution, userSide: randomSide, difficulty: difficultyRef.current }), signal });
+        const res = await fetch("/api/spar-generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ resolution: chosenResolution, userSide: randomSide, difficulty: difficultyRef.current, aiDifficulty: aiDifficultyRef.current }), signal });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? "Generation failed");
         setAiData(data); aiDataRef.current = data;
@@ -463,7 +544,15 @@ export default function SparPage() {
 
   const startSpeechPhases = useCallback(() => {
     if (prepTimerRef.current) { clearInterval(prepTimerRef.current); prepTimerRef.current = null; }
-    stop(); setPhaseIndex(0); startPhaseTimer(PHASES[0].seconds); setStage("speech");
+    stop();
+    setStage("speech");
+    const firstPhase = PHASES[0];
+    if (firstPhase.side === userSideRef.current) {
+      setTransitionData({ nextPhaseIdx: 0, label: firstPhase.label });
+    } else {
+      setPhaseIndex(0);
+      startPhaseTimer(firstPhase.seconds);
+    }
   }, [stop, startPhaseTimer]);
 
   // ── Constructive / Rebuttal stop ──────────────────────────────────────────
@@ -480,7 +569,7 @@ export default function SparPage() {
       setCrossfireGenerating(true); setCrossfireQuestions(null); crossfireQRef.current = null;
       const ai = aiDataRef.current;
       const aiSide = ai?.aiSide ?? (userSide === "aff" ? "neg" : "aff");
-      fetch("/api/spar-crossfire", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ resolution: resolutionRef.current, aiSide, aiConstructive: ai?.ai_constructive ?? "", userConstructive: transcript, difficulty: difficultyRef.current }), signal: abortRef.current?.signal })
+      fetch("/api/spar-crossfire", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ resolution: resolutionRef.current, aiSide, aiConstructive: ai?.ai_constructive ?? "", userConstructive: transcript, difficulty: difficultyRef.current, aiDifficulty: aiDifficultyRef.current }), signal: abortRef.current?.signal })
         .then(r => r.json()).then(d => { if (d.crossfire_questions) { setCrossfireQuestions(d.crossfire_questions); crossfireQRef.current = d.crossfire_questions; } })
         .catch(() => {}).finally(() => setCrossfireGenerating(false));
     }
@@ -517,7 +606,7 @@ export default function SparPage() {
   const handleReset = () => {
     stop(); clearTimer();
     if (prepTimerRef.current) clearInterval(prepTimerRef.current);
-    setStage("setup"); setUserName(""); setResolution(""); setAiData(null); aiDataRef.current = null;
+    setStage("setup"); setTransitionData(null); setUserName(""); setResolution(""); setAiData(null); aiDataRef.current = null;
     setAiGenerating(false); setAiGenerateError(""); setCrossfireQuestions(null); crossfireQRef.current = null;
     setCrossfireGenerating(false); setPhaseIndex(0); setRemaining(120); setRecordings({});
     setFeedback(null); setError(""); setPrepRemaining(120);
@@ -611,6 +700,40 @@ export default function SparPage() {
               />
             )}
           </div>
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-gray-300 text-center">AI Strength</p>
+            <div className="grid grid-cols-3 gap-2">
+              {(["easy", "medium", "hard"] as const).map(d => (
+                <button key={d} onClick={() => setAiDifficulty(d)}
+                  className={`py-2.5 rounded-xl text-sm font-semibold border transition-colors ${aiDifficulty === d
+                    ? d === "easy" ? "bg-green-900 border-green-600 text-green-300"
+                      : d === "medium" ? "bg-yellow-900 border-yellow-600 text-yellow-300"
+                      : "bg-red-900 border-red-600 text-red-300"
+                    : "bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500"}`}>
+                  {d === "easy" ? "🐣 Weak" : d === "medium" ? "💪 Normal" : "🔥 Strong"}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 text-center">
+              {aiDifficulty === "easy" ? "AI leaves logical gaps and exploitable flaws for you to catch"
+                : aiDifficulty === "medium" ? "AI makes solid, competent arguments"
+                : "AI makes the strongest possible case with tight logic"}
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between px-1">
+            <div>
+              <p className="text-sm font-medium text-gray-300">Auto-play AI audio</p>
+              <p className="text-xs text-gray-500">AI speeches play automatically when ready</p>
+            </div>
+            <button
+              onClick={() => setAutoPlayAudio(a => !a)}
+              className={`relative w-12 h-6 rounded-full transition-colors ${autoPlayAudio ? "bg-blue-600" : "bg-gray-700"}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${autoPlayAudio ? "translate-x-6" : "translate-x-0"}`} />
+            </button>
+          </div>
+
           {error && <p className="text-red-400 text-sm text-center">{error}</p>}
           <button onClick={handleStart} className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-colors">Start Debate</button>
           <p className="text-center text-xs text-gray-600">Format: Prep → Aff Constructive → Neg Constructive → Crossfire → Aff Rebuttal → Neg Rebuttal</p>
@@ -745,6 +868,35 @@ export default function SparPage() {
   }
 
   if (stage === "speech") {
+    // Transition countdown before user's turn
+    if (transitionData !== null) {
+      const { nextPhaseIdx, label } = transitionData;
+      const nextPhase = PHASES[nextPhaseIdx];
+      const sideLabel = userSide === "aff" ? "Affirmative" : "Negative";
+      const desc = nextPhase.id.includes("rebuttal")
+        ? "Rebut your opponent's arguments and defend your own position."
+        : `Argue the ${sideLabel} side — state your main claims with supporting evidence.`;
+      return (
+        <main className="min-h-screen flex flex-col items-center justify-center p-8">
+          <div className="w-full max-w-xl space-y-10 text-center">
+            <TopicBanner resolution={resolution} userSide={userSide} />
+            <div className="space-y-3">
+              <p className="text-xs text-gray-500 uppercase tracking-widest font-medium">Your Turn Coming Up</p>
+              <h2 className="text-2xl font-bold text-white">{label}</h2>
+              <p className="text-gray-400 text-sm max-w-sm mx-auto">{desc}</p>
+            </div>
+            <TransitionCountdown
+              onDone={() => {
+                setTransitionData(null);
+                setPhaseIndex(nextPhaseIdx);
+                startPhaseTimer(nextPhase.seconds);
+              }}
+            />
+          </div>
+        </main>
+      );
+    }
+
     const phase = PHASES[phaseIndex];
     const isUserPhase = phase.side === userSide;
     const aiSpeechText = (phase.id === "aff_rebuttal" || phase.id === "neg_rebuttal") ? aiData?.ai_rebuttal : aiData?.ai_constructive;

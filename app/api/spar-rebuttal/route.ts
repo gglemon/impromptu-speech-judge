@@ -3,7 +3,7 @@ import { callOllama } from "@/lib/ollama";
 
 export async function POST(req: NextRequest) {
   try {
-    const { resolution, aiSide, aiConstructive, userConstructive, userCrossfire, difficulty = "medium" } = await req.json();
+    const { resolution, aiSide, aiConstructive, userConstructive, userCrossfire, difficulty = "medium", aiDifficulty = "medium" } = await req.json();
 
     const aiSideLabel = aiSide === "aff" ? "Affirmative" : "Negative";
     const userSideLabel = aiSide === "aff" ? "Negative" : "Affirmative";
@@ -36,7 +36,11 @@ CROSSFIRE EXCHANGES:
 ${userCrossfire || "(No crossfire took place)"}
 """
 
-Write a REBUTTAL SPEECH (exactly 300 words) that directly responds to your opponent's actual arguments above.
+${aiDifficulty === "easy"
+  ? `Write a REBUTTAL SPEECH (exactly 300 words) that is somewhat weak. Miss at least one key point your opponent made. Make at least one logical error or weak comparison. Leave the rebuttal beatable.`
+  : aiDifficulty === "hard"
+  ? `Write a strong REBUTTAL SPEECH (exactly 300 words) that directly responds to ALL of your opponent's key arguments. Leave no major point unaddressed.`
+  : `Write a REBUTTAL SPEECH (exactly 300 words) that directly responds to your opponent's actual arguments above.`}
 Begin "In my rebuttal...". Address 3 specific points your opponent raised (or note if they failed to make arguments). Defend your own constructive arguments. End urging a vote ${voteDirection} the resolution.
 
 Return ONLY valid JSON (no markdown, no code blocks):
