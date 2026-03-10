@@ -11,6 +11,10 @@ function getRandomTopic(): string {
   return practiceTopics[Math.floor(Math.random() * practiceTopics.length)];
 }
 
+function getTopicDifficulty(topic: string): "easy" | "medium" {
+  return sparTopics.easy.includes(topic) ? "easy" : "medium";
+}
+
 interface CriterionScores {
   relevance: number;
   reasoning: number;
@@ -87,6 +91,11 @@ export default function DebatePracticePage() {
   const [error, setError] = useState("");
   const [inputMode, setInputMode] = useState<"voice" | "text">("voice");
   const [textInput, setTextInput] = useState("");
+  const [hint, setHint] = useState("");
+  const [hintLoading, setHintLoading] = useState(false);
+  const [hintError, setHintError] = useState("");
+
+  const difficulty = getTopicDifficulty(topic);
 
   const currentTurn = TURNS[turnIndex];
   const isLastTurn = turnIndex === TURNS.length - 1;
@@ -138,7 +147,39 @@ export default function DebatePracticePage() {
       setCurrentTranscript("");
       setCurrentFeedback(null);
       setTextInput("");
+      setHint("");
+      setHintError("");
       setStage("recording");
+    }
+  }
+
+  async function fetchHint() {
+    setHint("");
+    setHintError("");
+    setHintLoading(true);
+    try {
+      const res = await fetch("/api/debate-hint", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resolution: topic,
+          side: currentTurn.side,
+          round: currentTurn.round,
+          difficulty,
+          previousArguments: results.map((r) => ({
+            side: r.side,
+            round: r.round,
+            transcript: r.transcript,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Hint failed");
+      setHint(data.hint);
+    } catch (e) {
+      setHintError(e instanceof Error ? e.message : "Could not load hint");
+    } finally {
+      setHintLoading(false);
     }
   }
 
@@ -210,7 +251,7 @@ export default function DebatePracticePage() {
 
     return (
       <main className="min-h-screen flex flex-col items-center justify-center p-8">
-        <div className="w-full max-w-2xl space-y-8">
+        <div className="w-full max-w-2xl space-y-6">
           <div className="text-center space-y-1">
             <p className={`text-xs uppercase tracking-widest font-semibold ${labelColor}`}>
               Round {currentTurn.round} — {sideLabel}
@@ -221,6 +262,48 @@ export default function DebatePracticePage() {
           <div className={`rounded-2xl border ${borderColor} ${bgColor} p-5 space-y-2`}>
             <p className="text-xs text-gray-400">{instruction}:</p>
             <p className="text-white font-medium">&ldquo;{topic}&rdquo;</p>
+          </div>
+
+          {/* Past arguments */}
+          {results.length > 0 && (
+            <div className="rounded-xl border border-gray-700 bg-gray-900 p-4 space-y-3">
+              <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Your previous arguments</p>
+              <div className="space-y-2">
+                {results.map((r, i) => {
+                  const rIsAff = r.side === "aff";
+                  const tagColor = rIsAff ? "text-purple-400" : "text-orange-400";
+                  const scoreColor =
+                    r.score >= 8 ? "text-green-400" : r.score >= 6 ? "text-yellow-400" : "text-red-400";
+                  return (
+                    <div key={i} className="flex gap-3 text-sm">
+                      <span className={`shrink-0 font-semibold ${tagColor}`}>
+                        {rIsAff ? "AFF" : "NEG"} R{r.round}
+                      </span>
+                      <span className="text-gray-300 flex-1">{r.transcript}</span>
+                      <span className={`shrink-0 font-bold ${scoreColor}`}>{r.score}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Hint button + display */}
+          <div className="space-y-2">
+            <button
+              onClick={fetchHint}
+              disabled={hintLoading}
+              className="w-full py-2.5 border border-yellow-700 bg-yellow-950 hover:bg-yellow-900 disabled:opacity-50 text-yellow-300 font-semibold rounded-xl transition-colors text-sm"
+            >
+              {hintLoading ? "Getting hint..." : "💡 Get AI Hint"}
+            </button>
+            {hintError && <p className="text-red-400 text-xs text-center">{hintError}</p>}
+            {hint && (
+              <div className="rounded-xl border border-yellow-800 bg-yellow-950 p-4">
+                <p className="text-xs text-yellow-500 mb-1 font-semibold">Coach hint</p>
+                <p className="text-yellow-100 text-sm leading-relaxed">{hint}</p>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col items-center gap-6">
