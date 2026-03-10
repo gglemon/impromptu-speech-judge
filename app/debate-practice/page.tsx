@@ -89,7 +89,7 @@ export default function DebatePracticePage() {
   const [results, setResults] = useState<ArgumentResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [inputMode, setInputMode] = useState<"voice" | "text">("voice");
+  const [inputMode, setInputMode] = useState<"voice" | "text" | "ai">("voice");
   const [textInput, setTextInput] = useState("");
   const [recordingStarted, setRecordingStarted] = useState(false);
   const [hint, setHint] = useState("");
@@ -151,6 +151,7 @@ export default function DebatePracticePage() {
       setRecordingStarted(false);
       setHint("");
       setHintError("");
+      setInputMode("voice");
       setStage("recording");
     }
   }
@@ -290,24 +291,6 @@ export default function DebatePracticePage() {
             </div>
           )}
 
-          {/* Hint button + display */}
-          <div className="space-y-2">
-            <button
-              onClick={fetchHint}
-              disabled={hintLoading}
-              className="w-full py-2.5 border border-yellow-700 bg-yellow-950 hover:bg-yellow-900 disabled:opacity-50 text-yellow-300 font-semibold rounded-xl transition-colors text-sm"
-            >
-              {hintLoading ? "Getting hint..." : "💡 Get AI Hint"}
-            </button>
-            {hintError && <p className="text-red-400 text-xs text-center">{hintError}</p>}
-            {hint && (
-              <div className="rounded-xl border border-yellow-800 bg-yellow-950 p-4">
-                <p className="text-xs text-yellow-500 mb-1 font-semibold">Coach hint</p>
-                <p className="text-yellow-100 text-sm leading-relaxed">{hint}</p>
-              </div>
-            )}
-          </div>
-
           <div className="flex flex-col items-center gap-6">
             {/* Input mode toggle */}
             <div className="flex rounded-xl overflow-hidden border border-gray-700">
@@ -327,6 +310,14 @@ export default function DebatePracticePage() {
               >
                 ✏️ Text
               </button>
+              <button
+                onClick={() => { setInputMode("ai"); if (!hint && !hintLoading) fetchHint(); }}
+                className={`px-6 py-2 text-sm font-semibold transition-colors ${
+                  inputMode === "ai" ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-500 hover:text-gray-300"
+                }`}
+              >
+                💡 AI
+              </button>
             </div>
 
             {inputMode === "voice" ? (
@@ -340,7 +331,7 @@ export default function DebatePracticePage() {
                   🎙 Start Recording
                 </button>
               )
-            ) : (
+            ) : inputMode === "text" ? (
               <div className="flex flex-col gap-3 w-full">
                 <textarea
                   value={textInput}
@@ -356,6 +347,28 @@ export default function DebatePracticePage() {
                 >
                   Submit Argument
                 </button>
+              </div>
+            ) : (
+              <div className="w-full space-y-3">
+                {hintLoading && (
+                  <div className="flex items-center gap-3 justify-center py-4">
+                    <div className="w-5 h-5 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-yellow-400 text-sm">Getting hint...</p>
+                  </div>
+                )}
+                {hintError && <p className="text-red-400 text-sm text-center">{hintError}</p>}
+                {hint && !hintLoading && (
+                  <div className="rounded-xl border border-yellow-800 bg-yellow-950 p-4 space-y-2">
+                    <p className="text-xs text-yellow-500 font-semibold uppercase tracking-wide">Coach hint</p>
+                    <p className="text-yellow-100 text-sm leading-relaxed">{hint}</p>
+                    <button
+                      onClick={fetchHint}
+                      className="text-xs text-yellow-600 hover:text-yellow-400 transition-colors pt-1"
+                    >
+                      Try another hint →
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
