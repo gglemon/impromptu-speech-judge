@@ -10,6 +10,8 @@ interface CasualFeedback {
   summary: string;
   highlights: string[];
   tip: string;
+  length_note?: string;
+  ai_example?: string;
 }
 
 interface Props {
@@ -17,9 +19,10 @@ interface Props {
   topic: string;
   transcript: string;
   audioUrl?: string;
+  onRedo?: () => void;
 }
 
-export default function CasualFeedbackReport({ feedback, topic, transcript, audioUrl }: Props) {
+export default function CasualFeedbackReport({ feedback, topic, transcript, audioUrl, onRedo }: Props) {
   const router = useRouter();
 
   return (
@@ -65,6 +68,24 @@ export default function CasualFeedbackReport({ feedback, topic, transcript, audi
         <p className="text-amber-100">{feedback.tip}</p>
       </div>
 
+      {/* Speech length note */}
+      {feedback.length_note && (
+        <div className="rounded-xl bg-blue-950 border border-blue-700 p-4">
+          <p className="text-xs text-blue-400 font-semibold uppercase tracking-wide mb-1">⏱ Speech Length</p>
+          <p className="text-blue-100 text-sm">{feedback.length_note}</p>
+        </div>
+      )}
+
+      {/* AI example speech */}
+      {feedback.ai_example && (
+        <details className="rounded-xl bg-gray-800 border border-emerald-700 p-5">
+          <summary className="cursor-pointer text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors">
+            ✨ See an AI Example Speech (tap to read)
+          </summary>
+          <p className="mt-3 text-gray-200 text-sm leading-relaxed whitespace-pre-wrap">{feedback.ai_example}</p>
+        </details>
+      )}
+
       {/* Transcript (collapsible) */}
       <details className="rounded-xl bg-gray-800 border border-gray-700 p-5">
         <summary className="cursor-pointer text-sm font-medium text-gray-400 hover:text-white transition-colors">
@@ -75,11 +96,19 @@ export default function CasualFeedbackReport({ feedback, topic, transcript, audi
 
       {/* Buttons */}
       <div className="flex gap-3">
+        {onRedo && (
+          <button
+            onClick={onRedo}
+            className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl transition-colors"
+          >
+            ↩ Try Again
+          </button>
+        )}
         <button
           onClick={() => router.push("/casual")}
           className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-colors"
         >
-          Try Another Topic
+          New Topic
         </button>
         <Link
           href="/"

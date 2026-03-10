@@ -15,11 +15,15 @@ interface CasualFeedback {
   summary: string;
   highlights: string[];
   tip: string;
+  length_note?: string;
+  ai_example?: string;
 }
 
 export default function CasualPage() {
   const [stage, setStage] = useState<Stage>("loading");
-  const [topic, setTopic] = useState("");
+  const [randomTopic, setRandomTopic] = useState("");
+  const [customTopic, setCustomTopic] = useState("");
+  const topic = customTopic.trim() || randomTopic;
   const [transcript, setTranscript] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
   const [feedback, setFeedback] = useState<CasualFeedback | null>(null);
@@ -29,12 +33,12 @@ export default function CasualPage() {
 
   // Pick a random topic immediately on mount
   useEffect(() => {
-    const randomTopic = casualTopics[Math.floor(Math.random() * casualTopics.length)];
-    setTopic(randomTopic);
+    const t = casualTopics[Math.floor(Math.random() * casualTopics.length)];
+    setRandomTopic(t);
     setStage("topic");
   }, []);
 
-  async function handleStop(transcript: string, _duration: number, recordingUrl: string) {
+  async function handleStop(transcript: string, duration: number, recordingUrl: string) {
     setTranscript(transcript);
     setAudioUrl(recordingUrl);
     setStage("processing");
@@ -43,7 +47,7 @@ export default function CasualPage() {
       const res = await fetch("/api/casual-feedback", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ topic, transcript, speechLength }),
+        body: JSON.stringify({ topic, transcript, speechLength, actualDuration: Math.round(duration) }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Feedback failed");
@@ -78,7 +82,16 @@ export default function CasualPage() {
           <div className="space-y-8 text-center">
             <div className="rounded-2xl bg-emerald-950 border border-emerald-700 p-8 space-y-4">
               <p className="text-emerald-300 text-sm font-medium uppercase tracking-wide">Your Topic</p>
-              <p className="text-3xl font-bold text-white leading-snug">{topic}</p>
+              <p className="text-3xl font-bold text-white leading-snug">{randomTopic}</p>
+              <div className="pt-1">
+                <input
+                  type="text"
+                  value={customTopic}
+                  onChange={e => setCustomTopic(e.target.value)}
+                  placeholder="or type your own topic..."
+                  className="w-full bg-transparent border-b border-emerald-700 text-center text-emerald-100 placeholder-emerald-800 text-sm py-1 focus:outline-none focus:border-emerald-400 transition-colors"
+                />
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -170,7 +183,20 @@ export default function CasualPage() {
 
         {/* Feedback */}
         {stage === "feedback" && feedback && (
-          <CasualFeedbackReport feedback={feedback} topic={topic} transcript={transcript} audioUrl={audioUrl} />
+          <CasualFeedbackReport
+            feedback={feedback}
+            topic={topic}
+            transcript={transcript}
+            audioUrl={audioUrl}
+            onRedo={() => {
+              setFeedback(null);
+              setTranscript("");
+              setAudioUrl("");
+              setError("");
+              setRecordingStarted(false);
+              setStage("topic");
+            }}
+          />
         )}
       </div>
     </main>
