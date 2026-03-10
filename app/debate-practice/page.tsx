@@ -122,7 +122,7 @@ function advanceState(
 }
 
 export default function DebatePracticePage() {
-  const [topic] = useState<string>(getRandomTopic);
+  const [topic, setTopic] = useState<string>(getRandomTopic);
   const [stage, setStage] = useState<Stage>("intro");
   const [turnIndex, setTurnIndex] = useState(0);
   const [practiceMode, setPracticeMode] = useState<"solo" | "friend">("solo");
@@ -406,9 +406,16 @@ export default function DebatePracticePage() {
             <p className="text-gray-400">Practice arguing both sides of a resolution</p>
           </div>
 
-          <div className="rounded-2xl border border-purple-700 bg-purple-950 p-6 space-y-2">
+          <div className="rounded-2xl border border-purple-700 bg-purple-950 p-6 space-y-3">
             <p className="text-xs text-purple-400 uppercase tracking-widest font-semibold">Resolution</p>
             <p className="text-2xl font-semibold text-white leading-snug">&ldquo;{topic}&rdquo;</p>
+            <textarea
+              value={topic}
+              onChange={e => setTopic(e.target.value)}
+              rows={2}
+              placeholder="Type your own resolution..."
+              className="w-full bg-transparent border border-purple-800 rounded-xl text-purple-100 placeholder-purple-900 text-sm p-3 resize-none focus:outline-none focus:border-purple-500 transition-colors"
+            />
           </div>
 
           <div className="rounded-2xl border border-gray-700 bg-gray-900 p-6 space-y-3">
