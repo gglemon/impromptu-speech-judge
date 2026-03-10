@@ -87,10 +87,10 @@ function CriterionRow({ label, original, redo }: { label: string; original: numb
   );
 }
 
-function TurnIndicator({ current }: { current: number }) {
+function TurnIndicator({ current, total }: { current: number; total: number }) {
   return (
     <div className="flex justify-center gap-2">
-      {TURNS.map((t, i) => {
+      {TURNS.slice(0, total * 2).map((t, i) => {
         const isPast = i < current;
         const isCurrent = i === current;
         const dotColor = isPast
@@ -127,6 +127,7 @@ export default function DebatePracticePage() {
   const [turnIndex, setTurnIndex] = useState(0);
   const [practiceMode, setPracticeMode] = useState<"solo" | "friend">("solo");
   const [userSide, setUserSide] = useState<"aff" | "neg">("aff");
+  const [numRounds, setNumRounds] = useState(3);
   const [currentTranscript, setCurrentTranscript] = useState("");
   const [currentFeedback, setCurrentFeedback] = useState<ArgumentFeedback | null>(null);
   const [results, setResults] = useState<ArgumentResult[]>([]);
@@ -157,7 +158,7 @@ export default function DebatePracticePage() {
 
   const difficulty = getTopicDifficulty(topic);
   const currentTurn = TURNS[turnIndex];
-  const isLastTurn = turnIndex === TURNS.length - 1;
+  const isLastTurn = turnIndex === numRounds * 2 - 1;
 
   function resetTurnInputs() {
     setCurrentTranscript("");
@@ -439,6 +440,24 @@ export default function DebatePracticePage() {
           </div>
 
           <div className="space-y-3">
+            <p className="text-sm font-medium text-gray-300 text-center">Rounds per side</p>
+            <div className="flex rounded-xl overflow-hidden border border-gray-700">
+              {[2, 3].map(n => (
+                <button
+                  key={n}
+                  onClick={() => setNumRounds(n)}
+                  className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${numRounds === n ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-400 hover:text-white"}`}
+                >
+                  {n} rounds
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 text-center">
+              {numRounds === 2 ? "4 total arguments (AFF×2 + NEG×2)" : "6 total arguments (AFF×3 + NEG×3)"}
+            </p>
+          </div>
+
+          <div className="space-y-3">
             <p className="text-sm font-medium text-gray-300 text-center">Practice Mode</p>
             <div className="flex rounded-xl overflow-hidden border border-gray-700">
               <button
@@ -619,7 +638,7 @@ export default function DebatePracticePage() {
             )}
           </div>
 
-          <TurnIndicator current={turnIndex} />
+          <TurnIndicator current={turnIndex} total={numRounds} />
         </div>
       </main>
     );
@@ -744,7 +763,7 @@ export default function DebatePracticePage() {
             </div>
           )}
 
-          <TurnIndicator current={turnIndex} />
+          <TurnIndicator current={turnIndex} total={numRounds} />
         </div>
       </main>
     );
@@ -879,7 +898,7 @@ export default function DebatePracticePage() {
             </>
           )}
 
-          <TurnIndicator current={turnIndex} />
+          <TurnIndicator current={turnIndex} total={numRounds} />
         </div>
       </main>
     );
@@ -919,7 +938,21 @@ export default function DebatePracticePage() {
                 </div>
                 <p className="text-gray-400 text-sm italic">&ldquo;{r.transcript}&rdquo;</p>
                 <p className="text-gray-300 text-sm">{r.summary}</p>
-                <div className="flex gap-4 text-xs text-gray-500">
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div className="space-y-1">
+                    <p className="text-xs text-green-400 font-semibold uppercase tracking-wide">Strengths</p>
+                    {r.strengths.map((s, j) => (
+                      <p key={j} className="text-xs text-green-200">• {s}</p>
+                    ))}
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-amber-400 font-semibold uppercase tracking-wide">Improve</p>
+                    {r.improvements.map((s, j) => (
+                      <p key={j} className="text-xs text-amber-200">• {s}</p>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex gap-4 text-xs text-gray-500 pt-1 border-t border-gray-800">
                   <span>Relevance: {r.criterion_scores.relevance}</span>
                   <span>Reasoning: {r.criterion_scores.reasoning}</span>
                   <span>Clarity: {r.criterion_scores.clarity}</span>
