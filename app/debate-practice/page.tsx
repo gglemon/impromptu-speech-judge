@@ -36,6 +36,8 @@ const TURNS: Array<{ side: "aff" | "neg"; round: number }> = [
   { side: "neg", round: 1 },
   { side: "aff", round: 2 },
   { side: "neg", round: 2 },
+  { side: "aff", round: 3 },
+  { side: "neg", round: 3 },
 ];
 
 type Stage = "intro" | "recording" | "rating" | "complete";
@@ -83,6 +85,8 @@ export default function DebatePracticePage() {
   const [results, setResults] = useState<ArgumentResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [inputMode, setInputMode] = useState<"voice" | "text">("voice");
+  const [textInput, setTextInput] = useState("");
 
   const currentTurn = TURNS[turnIndex];
   const isLastTurn = turnIndex === TURNS.length - 1;
@@ -133,6 +137,7 @@ export default function DebatePracticePage() {
       setTurnIndex((i) => i + 1);
       setCurrentTranscript("");
       setCurrentFeedback(null);
+      setTextInput("");
       setStage("recording");
     }
   }
@@ -163,25 +168,21 @@ export default function DebatePracticePage() {
           <div className="rounded-2xl border border-gray-700 bg-gray-900 p-6 space-y-3">
             <p className="text-sm font-semibold text-gray-300">How it works</p>
             <div className="space-y-2 text-sm">
-              <div className="flex items-center gap-3">
-                <span className="w-24 text-purple-400 font-semibold shrink-0">AFF Round 1</span>
-                <span className="text-gray-400">Argue FOR the resolution</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="w-24 text-orange-400 font-semibold shrink-0">NEG Round 1</span>
-                <span className="text-gray-400">Argue AGAINST the resolution</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="w-24 text-purple-400 font-semibold shrink-0">AFF Round 2</span>
-                <span className="text-gray-400">Make a stronger affirmative argument</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="w-24 text-orange-400 font-semibold shrink-0">NEG Round 2</span>
-                <span className="text-gray-400">Make a stronger negative argument</span>
-              </div>
+              {[1, 2, 3].map((r) => (
+                <div key={r} className="flex gap-3">
+                  <span className="w-24 text-purple-400 font-semibold shrink-0">AFF Round {r}</span>
+                  <span className="text-gray-400">{r === 1 ? "Argue FOR the resolution" : "Make a stronger affirmative argument"}</span>
+                </div>
+              ))}
+              {[1, 2, 3].map((r) => (
+                <div key={r} className="flex gap-3">
+                  <span className="w-24 text-orange-400 font-semibold shrink-0">NEG Round {r}</span>
+                  <span className="text-gray-400">{r === 1 ? "Argue AGAINST the resolution" : "Make a stronger negative argument"}</span>
+                </div>
+              ))}
             </div>
             <p className="text-xs text-gray-500 pt-1">
-              AI rates each argument on relevance, reasoning, and clarity.
+              AI rates each argument on relevance, reasoning, and clarity. Use voice or text input.
             </p>
           </div>
 
@@ -223,7 +224,46 @@ export default function DebatePracticePage() {
           </div>
 
           <div className="flex flex-col items-center gap-6">
-            <AudioRecorder onStop={(transcript) => handleRecordingDone(transcript)} />
+            {/* Input mode toggle */}
+            <div className="flex rounded-xl overflow-hidden border border-gray-700">
+              <button
+                onClick={() => setInputMode("voice")}
+                className={`px-6 py-2 text-sm font-semibold transition-colors ${
+                  inputMode === "voice" ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-500 hover:text-gray-300"
+                }`}
+              >
+                🎙 Voice
+              </button>
+              <button
+                onClick={() => setInputMode("text")}
+                className={`px-6 py-2 text-sm font-semibold transition-colors ${
+                  inputMode === "text" ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-500 hover:text-gray-300"
+                }`}
+              >
+                ✏️ Text
+              </button>
+            </div>
+
+            {inputMode === "voice" ? (
+              <AudioRecorder onStop={(transcript) => handleRecordingDone(transcript)} />
+            ) : (
+              <div className="flex flex-col gap-3 w-full">
+                <textarea
+                  value={textInput}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  placeholder="Type your argument here..."
+                  className="w-full h-36 p-4 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm leading-relaxed resize-none focus:outline-none focus:border-purple-500"
+                  autoFocus
+                />
+                <button
+                  onClick={() => { if (textInput.trim()) handleRecordingDone(textInput.trim()); }}
+                  disabled={!textInput.trim()}
+                  className="w-full py-3 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white font-bold rounded-xl transition-colors"
+                >
+                  Submit Argument
+                </button>
+              </div>
+            )}
           </div>
 
           <TurnIndicator current={turnIndex} />
