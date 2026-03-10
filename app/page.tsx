@@ -13,7 +13,7 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {/* SPAR Debate */}
           <Link
             href="/spar"
@@ -47,6 +47,18 @@ export default function Home() {
             <h2 className="text-xl font-semibold text-white">Free Talk</h2>
             <p className="text-sm text-emerald-300 text-center">
               Fun topics and friendly feedback for young speakers
+            </p>
+          </Link>
+
+          {/* Debate Practice */}
+          <Link
+            href="/debate-practice"
+            className="flex flex-col items-center gap-4 rounded-2xl border border-purple-700 bg-purple-950 p-8 hover:bg-purple-900 transition-colors"
+          >
+            <span className="text-5xl">🥊</span>
+            <h2 className="text-xl font-semibold text-white">Debate Practice</h2>
+            <p className="text-sm text-purple-300 text-center">
+              Argue both sides of a resolution and get AI feedback on each argument
             </p>
           </Link>
         </div>
