@@ -24,6 +24,7 @@ export default function CasualPage() {
   const [audioUrl, setAudioUrl] = useState("");
   const [feedback, setFeedback] = useState<CasualFeedback | null>(null);
   const [error, setError] = useState("");
+  const [recordingStarted, setRecordingStarted] = useState(false);
 
   // Pick a random topic immediately on mount
   useEffect(() => {
@@ -95,7 +96,18 @@ export default function CasualPage() {
               <p className="text-emerald-300 text-sm font-medium uppercase tracking-wide mb-2">Your Topic</p>
               <p className="text-xl font-semibold text-white">{topic}</p>
             </div>
-            <AudioRecorder onStop={handleStop} />
+            {recordingStarted ? (
+              <AudioRecorder onStop={handleStop} />
+            ) : (
+              <div className="flex flex-col items-center">
+                <button
+                  onClick={() => setRecordingStarted(true)}
+                  className="px-10 py-4 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-colors text-lg"
+                >
+                  🎙 Start Recording
+                </button>
+              </div>
+            )}
           </div>
         )}
 
