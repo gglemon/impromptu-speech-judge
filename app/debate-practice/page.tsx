@@ -10,8 +10,13 @@ function pickTopic(diff: SparDifficulty): string {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-// Computed once at module load — stable across re-renders and Strict Mode remounts
-const initialTopic = pickTopic("medium");
+// Per-difficulty topic cache — topic is decided once per session per difficulty.
+const topicCache: Partial<Record<SparDifficulty, string>> = {};
+function getCachedTopic(diff: SparDifficulty): string {
+  if (!topicCache[diff]) topicCache[diff] = pickTopic(diff);
+  return topicCache[diff]!;
+}
+const initialTopic = getCachedTopic("medium");
 
 interface CriterionScores {
   relevance: number;
@@ -170,7 +175,7 @@ export default function DebatePracticePage() {
   useEffect(() => {
     if (difficulty === prevDifficultyRef.current) return;
     prevDifficultyRef.current = difficulty;
-    setTopic(pickTopic(difficulty));
+    setTopic(getCachedTopic(difficulty));
   }, [difficulty]);
 
   function resetTurnInputs() {

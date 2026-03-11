@@ -8,8 +8,13 @@ import { getRandomTwister } from "@/lib/tongueTwisters";
 type Difficulty = "easy" | "medium" | "hard";
 type Stage = "setup" | "ready" | "processing" | "feedback";
 
-// Computed once at module load — stable across re-renders and Strict Mode remounts
-const initialTwister = getRandomTwister("easy").text;
+// Per-difficulty twister cache — twister is decided once per session per difficulty.
+const twisterCache: Partial<Record<Difficulty, string>> = {};
+function getCachedTwister(diff: Difficulty): string {
+  if (!twisterCache[diff]) twisterCache[diff] = getRandomTwister(diff).text;
+  return twisterCache[diff]!;
+}
+const initialTwister = getCachedTwister("easy");
 
 interface TwisterFeedback {
   accuracy: number;
@@ -42,7 +47,7 @@ export default function TongueTwistersPage() {
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   function pickNewTwister(diff: Difficulty) {
-    setTwister(getRandomTwister(diff).text);
+    setTwister(getCachedTwister(diff));
   }
 
   const prevDifficultyRef = useRef<Difficulty>("easy");

@@ -184,8 +184,14 @@ function pickTopicOptions(diff: SparDifficulty): string[] {
   return shuffled.slice(0, 3);
 }
 
-// Computed once at module load — stable across re-renders and Strict Mode remounts
-const initialTopics = pickTopicOptions("medium");
+// Per-difficulty topic cache — topics are decided once per session and
+// stay the same when the user toggles difficulty back and forth.
+const topicCache: Partial<Record<SparDifficulty, string[]>> = {};
+function getCachedTopics(diff: SparDifficulty): string[] {
+  if (!topicCache[diff]) topicCache[diff] = pickTopicOptions(diff);
+  return topicCache[diff]!;
+}
+const initialTopics = getCachedTopics("medium");
 
 function TransitionCountdown({ onDone }: { onDone: () => void }) {
   const [count, setCount] = useState(10);
@@ -310,7 +316,7 @@ export default function SparPage() {
   useEffect(() => {
     if (difficulty === prevDifficultyRef.current) return;
     prevDifficultyRef.current = difficulty;
-    const opts = pickTopicOptions(difficulty);
+    const opts = getCachedTopics(difficulty);
     setTopicOptions(opts);
     setSelectedTopic(opts[0]);
     setCustomTopicOpen(false);
