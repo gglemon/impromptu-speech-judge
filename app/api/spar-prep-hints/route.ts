@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callLLM } from "@/lib/llm";
+import { parseLLMJson } from "@/lib/parseLLMJson";
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,10 +36,13 @@ Return a prep sheet as ONLY valid JSON (no markdown, no code blocks):
 }`
     , req.signal);
 
+    console.log("[spar-prep-hints] raw LLM output:", text.slice(0, 500));
     const result = parseLLMJson(text);
+    console.log("[spar-prep-hints] parsed:", JSON.stringify(result).slice(0, 200));
     return NextResponse.json(result);
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);
+    console.error("[spar-prep-hints] error:", message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

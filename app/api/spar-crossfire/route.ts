@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callLLM } from "@/lib/llm";
+import { parseLLMJson } from "@/lib/parseLLMJson";
 
 export async function POST(req: NextRequest) {
   try {

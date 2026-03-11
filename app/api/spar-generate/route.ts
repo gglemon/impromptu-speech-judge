@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callLLM } from "@/lib/llm";
+import { parseLLMJson } from "@/lib/parseLLMJson";
 
 function getLanguageStyle(difficulty: string): string {
   if (difficulty === "easy") return "Write as a 3rd or 4th grade student would speak: use short sentences, simple everyday words, and concrete real-life examples. Avoid complex vocabulary or abstract reasoning.";
