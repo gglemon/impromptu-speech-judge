@@ -236,6 +236,7 @@ export default function SparPage() {
   const [autoPlayAudio, setAutoPlayAudio] = useState(false);
   const autoPlayAudioRef = useRef(false);
   const [aiDifficulty, setAiDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  const [preferredSide, setPreferredSide] = useState<"aff" | "neg" | "random">("random");
   const aiDifficultyRef = useRef<"easy" | "medium" | "hard">("medium");
   const [transitionData, setTransitionData] = useState<{ nextPhaseIdx: number; label: string } | null>(null);
   const userSideRef = useRef<"aff" | "neg">("aff");
@@ -507,7 +508,7 @@ export default function SparPage() {
     const signal = abortRef.current.signal;
     setError(""); setAiGenerateError("");
     const chosenResolution = selectedTopic || topicOptions[0];
-    const randomSide: "aff" | "neg" = Math.random() < 0.5 ? "aff" : "neg";
+    const randomSide: "aff" | "neg" = preferredSide === "random" ? (Math.random() < 0.5 ? "aff" : "neg") : preferredSide;
     const opponentSide: "aff" | "neg" = randomSide === "aff" ? "neg" : "aff";
     setResolution(chosenResolution); resolutionRef.current = chosenResolution;
     setUserSide(randomSide);
@@ -598,6 +599,66 @@ export default function SparPage() {
           await fetch("/api/spar-save", { method: "POST", body: form });
         };
         saveSession().catch(() => {});
+        // Auto-send summary email
+        const sendEmail = async () => {
+          const userSideLabel = userSide === "aff" ? "Affirmative" : "Negative";
+          const aiSideLabel = userSide === "aff" ? "Negative" : "Affirmative";
+          const lines = [
+            `SPAR DEBATE SUMMARY`,
+            `===================`,
+            ``,
+            `Resolution: ${resolution}`,
+            `${userName}: ${userSideLabel} | AI: ${aiSideLabel}`,
+            `Overall Score: ${data.overall_score.toFixed(1)} / 10`,
+            ``,
+            data.overall_summary,
+            ``,
+            `---`,
+            `SCORES`,
+            `---`,
+            `Constructive: ${data.constructive.score.toFixed(1)} / 10`,
+            `Cross-Fire:   ${data.crossfire.score.toFixed(1)} / 10`,
+            `Rebuttal:     ${data.rebuttal.score.toFixed(1)} / 10`,
+            ``,
+            `---`,
+            `${userName.toUpperCase()}'S SPEECHES`,
+            `---`,
+          ];
+          if (recordings.constructive?.transcript) lines.push(`Constructive Speech:`, recordings.constructive.transcript, ``);
+          if (recordings.crossfire?.transcript) lines.push(`Crossfire:`, recordings.crossfire.transcript, ``);
+          if (recordings.rebuttal?.transcript) lines.push(`Rebuttal:`, recordings.rebuttal.transcript, ``);
+          lines.push(`---`, `AI OPPONENT'S SPEECHES`, `---`);
+          lines.push(`AI Constructive:`, aiData.ai_constructive, ``);
+          if (aiData.ai_rebuttal) lines.push(`AI Rebuttal:`, aiData.ai_rebuttal, ``);
+          if (crossfireQRef.current?.length) {
+            lines.push(`---`, `AI CROSSFIRE QUESTIONS`, `---`);
+            crossfireQRef.current.forEach((q, i) => lines.push(`${i + 1}. ${q}`));
+            lines.push(``);
+          }
+          lines.push(`---`, `FEEDBACK`, `---`);
+          lines.push(`Constructive: ${data.constructive.feedback}`, ``);
+          lines.push(`Cross-Fire: ${data.crossfire.feedback}`, ``);
+          lines.push(`Rebuttal: ${data.rebuttal.feedback}`, ``);
+          lines.push(`Strengths:`);
+          data.strengths.forEach((s: string) => lines.push(`  ✓ ${s}`));
+          lines.push(``);
+          lines.push(`Areas for Improvement:`);
+          data.improvements.forEach((imp: { aspect: string; issue: string; suggestion: string }) => {
+            lines.push(`  [${imp.aspect}] ${imp.issue}`);
+            lines.push(`  → ${imp.suggestion}`);
+            lines.push(``);
+          });
+          await fetch("/api/send-email", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              to: "gglemon@gmail.com",
+              subject: `SPAR Debate Summary — ${resolution.slice(0, 60)}`,
+              text: lines.join("\n"),
+            }),
+          });
+        };
+        sendEmail().catch(() => {});
       } catch (e: unknown) { setError(e instanceof Error ? e.message : "Feedback generation failed"); }
     };
     go();
@@ -627,7 +688,7 @@ export default function SparPage() {
           <div className="text-center space-y-2">
             <Link href="/" className="text-gray-500 text-sm hover:text-gray-300 transition-colors">← Back</Link>
             <h1 className="text-3xl font-bold text-white">SPAR Debate</h1>
-            <p className="text-gray-400">You&apos;ll be assigned a random topic and side to debate against an AI opponent.</p>
+            <p className="text-gray-400">Pick a topic and debate against an AI opponent.</p>
           </div>
           <div className="space-y-3">
             <p className="text-sm font-medium text-gray-300 text-center">Opponent</p>
@@ -645,6 +706,35 @@ export default function SparPage() {
                 👥 vs Friend
               </button>
             </div>
+          </div>
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-gray-300 text-center">Your Side</p>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { value: "aff", label: "Affirmative", emoji: "✅" },
+                { value: "random", label: "Random", emoji: "🎲" },
+                { value: "neg", label: "Negative", emoji: "❌" },
+              ] as const).map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setPreferredSide(opt.value)}
+                  className={`py-2.5 rounded-xl text-sm font-semibold border transition-colors ${
+                    preferredSide === opt.value
+                      ? opt.value === "aff" ? "bg-green-900 border-green-600 text-green-300"
+                        : opt.value === "neg" ? "bg-red-900 border-red-600 text-red-300"
+                        : "bg-blue-900 border-blue-600 text-blue-300"
+                      : "bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500"
+                  }`}
+                >
+                  {opt.emoji} {opt.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 text-center">
+              {preferredSide === "aff" ? "You argue FOR the resolution"
+                : preferredSide === "neg" ? "You argue AGAINST the resolution"
+                : "Side is randomly assigned at the start"}
+            </p>
           </div>
           <div className="space-y-3">
             <p className="text-sm font-medium text-gray-300 text-center">Difficulty</p>
