@@ -17,6 +17,7 @@ export async function callOpenRouter(prompt: string, signal?: AbortSignal): Prom
       model,
       messages: [{ role: "user", content: prompt }],
       stream: true,
+      max_tokens: Number(process.env.OPENROUTER_MAX_TOKENS ?? 2048),
     }),
     signal,
   });
