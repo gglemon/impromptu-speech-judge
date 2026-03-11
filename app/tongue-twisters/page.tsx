@@ -42,9 +42,10 @@ export default function TongueTwistersPage() {
     setTwister(getRandomTwister(diff).text);
   }
 
-  const isFirstDifficultyRender = useRef(true);
+  const prevDifficultyRef = useRef<Difficulty>("easy");
   useEffect(() => {
-    if (isFirstDifficultyRender.current) { isFirstDifficultyRender.current = false; return; }
+    if (difficulty === prevDifficultyRef.current) return;
+    prevDifficultyRef.current = difficulty;
     pickNewTwister(difficulty);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [difficulty]);

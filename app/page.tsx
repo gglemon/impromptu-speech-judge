@@ -61,6 +61,18 @@ export default function Home() {
               Argue both sides of a resolution and get AI feedback on each argument
             </p>
           </Link>
+
+          {/* Tongue Twisters */}
+          <Link
+            href="/tongue-twisters"
+            className="flex flex-col items-center gap-4 rounded-2xl border border-pink-700 bg-pink-950 p-8 hover:bg-pink-900 transition-colors sm:col-span-2"
+          >
+            <span className="text-5xl">👅</span>
+            <h2 className="text-xl font-semibold text-white">Tongue Twisters</h2>
+            <p className="text-sm text-pink-300 text-center">
+              AI-generated tongue twisters rated for accuracy and fluency
+            </p>
+          </Link>
         </div>
       </div>
     </main>

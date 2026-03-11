@@ -50,22 +50,7 @@ Return ONLY valid JSON (no markdown, no code blocks, no thinking tags):
       req.signal
     );
 
-    const cleaned = text
-      .replace(/<think>[\s\S]*?<\/think>/g, "")
-      .trim()
-      .replace(/```json|```/g, "")
-      .trim();
-
-    const sanitized = cleaned.replace(
-      /"((?:[^"\\]|\\.)*)"/g,
-      (_, inner) =>
-        `"${inner.replace(/[\x00-\x1F\x7F]/g, (c: string) => {
-          const escapes: Record<string, string> = { "\n": "\\n", "\r": "\\r", "\t": "\\t" };
-          return escapes[c] ?? "";
-        })}"`
-    );
-
-    return NextResponse.json(JSON.parse(sanitized));
+    parseLLMJson(text));
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: message }, { status: 500 });

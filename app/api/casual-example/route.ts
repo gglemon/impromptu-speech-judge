@@ -26,11 +26,7 @@ Return ONLY valid JSON (no markdown, no code blocks, no thinking tags):
       req.signal
     );
 
-    const cleaned = text.replace(/<think>[\s\S]*?<\/think>/g, "").trim().replace(/```json|```/g, "").trim();
-    const sanitized = cleaned.replace(/"((?:[^"\\]|\\.)*)"/g, (_, inner) =>
-      `"${inner.replace(/[\x00-\x1F\x7F]/g, (c: string) => ({ "\n": "\\n", "\r": "\\r", "\t": "\\t" } as Record<string, string>)[c] ?? "")}"`
-    );
-    const result = JSON.parse(sanitized);
+    const result = parseLLMJson(text);
     return NextResponse.json(result);
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);

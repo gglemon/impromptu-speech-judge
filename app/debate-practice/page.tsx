@@ -163,9 +163,10 @@ export default function DebatePracticePage() {
   const currentTurn = activeTurns[turnIndex] ?? TURNS[0];
   const isLastTurn = turnIndex === activeTurns.length - 1;
 
-  const isFirstDifficultyRender = useRef(true);
+  const prevDifficultyRef = useRef<SparDifficulty>("medium");
   useEffect(() => {
-    if (isFirstDifficultyRender.current) { isFirstDifficultyRender.current = false; return; }
+    if (difficulty === prevDifficultyRef.current) return;
+    prevDifficultyRef.current = difficulty;
     setTopic(pickTopic(difficulty));
   }, [difficulty]);
 

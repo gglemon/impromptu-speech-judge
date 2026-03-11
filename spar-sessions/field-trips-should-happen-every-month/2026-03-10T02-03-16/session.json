@@ -1,0 +1,65 @@
+{
+  "resolution": "Field trips should happen every month.",
+  "userSide": "aff",
+  "userName": "",
+  "aiSide": "neg",
+  "ai_constructive": "Hello, my name is AI Debate Agent, and I stand in negation of this resolution. I think we need to look at how good this idea is. Field trips are fun, but they take a lot out of the class. I want to tell you why I disagree with the resolution.\n\nFirst, field trips cost too much money. A bus ride to the museum is expensive. It costs for the bus, the tickets, and the food. If we do this every month, the school will run out of money. We need to save money for books and supplies. Teachers have to pay for everything, and it makes them sad. We can’t afford all these field trips every month.\n\nSecond, field trips make it hard to learn in class. After a field trip, kids are tired and bored. They don’t want to do homework or read the next day. The teacher has to spend time explaining things again. This takes away from learning time. We should focus on lessons inside the classroom. It’s better to stay home and study.\n\nThird, field trips are not always safe. Kids get lost or get hurt on field trips. It takes grown-ups to watch them all the time. This needs many people to help, which is hard for the school. Safety comes first. We don’t want accidents. It’s safer to stay at school where we know everything.\n\nIn short, monthly field trips cost too much, hurt learning, and are unsafe. We should stick to the plan of the school. Vote against this resolution.",
+  "ai_rebuttal": "In my rebuttal, I think the affirmative side didn't explain their ideas well. They didn't say why monthly field trips are a good idea. I need to answer their points, but they didn't make any arguments. That's why I'll stick to my own points from the constructive speech.\n\nFirst, about the cost. The affirmative didn't say anything about money. But I know field trips cost a lot. A bus to the museum, plus tickets, plus food, plus more. Every month, that adds up fast. We need the money for books and the classroom. If we spend it on field trips, we don't have enough for basics. Teachers work hard and they don't want to worry about money.\n\nSecond, about learning. The affirmative didn't say anything about how field trips affect school. But when kids go on trips, they get tired. They don't want to learn the next day. The teacher has to teach the same thing again, which takes time. We should focus on lessons in the classroom. That's where learning happens best. Staying home helps kids study more.\n\nThird, about safety. The affirmative didn't talk about safety. But field trips are dangerous. Kids can get lost or hurt. We need many adults to help, which is hard for the school. Staying at school is safer because we know the rules. Accidents can happen anywhere, but school is a controlled place.\n\nI think the resolution is bad because it costs too much, hurts learning, and is unsafe. We should not do monthly field trips. Vote against this resolution.",
+  "crossfire_questions": [
+    "Your opponent said field trips cost too much money, but how do you explain that many schools have monthly field trips without running out of money?",
+    "You mentioned that field trips take away learning time, but what about the hands-on learning that happens during field trips that can't be done inside the classroom?",
+    "You said field trips are unsafe, but every school has field trips sometimes, so why isn't that monthly field trip happening every month safe if it's okay sometimes?"
+  ],
+  "user_constructive": "",
+  "user_crossfire": "[Q1] User asks: [BLANK_AUDIO]\n\n[Q1] User responds: Test.\n\n[Q2] User asks: Test.\n\n[Q2] User responds: \n\n[Q3] User asks: Test.\n\n[Q3] User responds: ",
+  "user_rebuttal": "[BLANK_AUDIO]",
+  "feedback": {
+    "overall_score": 1,
+    "overall_summary": "The affirmative side forfeited all speeches except crossfire participation, which was minimal and unproductive, resulting in a poor overall performance.",
+    "constructive": {
+      "score": 1,
+      "feedback": "No constructive speech was recorded, indicating a complete failure to present arguments. The affirmative side forfeited this phase entirely.",
+      "ratings": {
+        "content": 1,
+        "structure": 1,
+        "delivery": 1
+      }
+    },
+    "crossfire": {
+      "score": 1,
+      "feedback": "No crossfire questions were asked, and responses were uninformative, demonstrating a lack of engagement in this phase.",
+      "ratings": {
+        "cross_examination": 1,
+        "delivery": 1
+      }
+    },
+    "rebuttal": {
+      "score": 1,
+      "feedback": "No rebuttal speech was recorded, meaning no arguments were defended or refuted. The affirmative side forfeited this phase entirely.",
+      "ratings": {
+        "content": 1,
+        "refutation": 1,
+        "delivery": 1
+      }
+    },
+    "strengths": [],
+    "improvements": [
+      {
+        "aspect": "Constructive Speech",
+        "issue": "No arguments were presented.",
+        "suggestion": "Develop a clear affirmative case with logical arguments supported by evidence."
+      },
+      {
+        "aspect": "Crossfire",
+        "issue": "No questions were asked or answered.",
+        "suggestion": "Practice formulating insightful questions to engage the opponent and demonstrate knowledge."
+      },
+      {
+        "aspect": "Rebuttal",
+        "issue": "No speech was delivered.",
+        "suggestion": "Prepare to defend the affirmative case by directly addressing the opponent's arguments."
+      }
+    ]
+  },
+  "savedAt": "2026-03-10T02:03:16.552Z"
+}

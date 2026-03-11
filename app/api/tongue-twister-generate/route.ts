@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { callLLM } from "@/lib/llm";
+import { parseLLMJson } from "@/lib/parseLLMJson";
 
 export async function POST(req: NextRequest) {
   const { allowed, retryAfterMs } = checkRateLimit();
@@ -38,13 +39,7 @@ Return ONLY valid JSON (no markdown, no code blocks, no thinking tags):
       req.signal
     );
 
-    const cleaned = text
-      .replace(/<think>[\s\S]*?<\/think>/g, "")
-      .trim()
-      .replace(/```json|```/g, "")
-      .trim();
-
-    const result = JSON.parse(cleaned);
+    const result = parseLLMJson(text);
     return NextResponse.json(result);
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);

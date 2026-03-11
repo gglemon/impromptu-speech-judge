@@ -32,6 +32,9 @@ export default function CasualPage() {
   const [aiExampleLoading, setAiExampleLoading] = useState(false);
   const [aiExampleError, setAiExampleError] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [outline, setOutline] = useState<{ opening: string; points: string[]; closing: string } | null>(null);
+  const [outlineLoading, setOutlineLoading] = useState(false);
+  const [outlineError, setOutlineError] = useState("");
 
   function speakExample() {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
@@ -47,6 +50,26 @@ export default function CasualPage() {
   function stopSpeaking() {
     if (typeof window !== "undefined") window.speechSynthesis?.cancel();
     setIsSpeaking(false);
+  }
+
+  async function handleShowOutline() {
+    setOutline(null);
+    setOutlineError("");
+    setOutlineLoading(true);
+    try {
+      const res = await fetch("/api/casual-outline", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ topic, speechLength }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      setOutline(data);
+    } catch (e: unknown) {
+      setOutlineError(e instanceof Error ? e.message : "Could not generate outline");
+    } finally {
+      setOutlineLoading(false);
+    }
   }
 
   async function handleShowExample() {
@@ -155,12 +178,56 @@ export default function CasualPage() {
             </div>
 
             <p className="text-gray-400">Take a breath, then press the button when you are ready to talk!</p>
-            <button
-              onClick={handleShowExample}
-              className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-lg rounded-xl transition-colors"
-            >
-              See Example &amp; Start 🎤
-            </button>
+
+            {/* AI Outline */}
+            <div className="space-y-3 text-left">
+              <button
+                onClick={handleShowOutline}
+                disabled={outlineLoading || !topic.trim()}
+                className="w-full py-2.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-40 border border-gray-600 text-gray-300 text-sm font-semibold rounded-xl transition-colors"
+              >
+                {outlineLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin inline-block" />
+                    Building outline...
+                  </span>
+                ) : outline ? "🔄 Regenerate Outline" : "📋 Get AI Outline"}
+              </button>
+              {outlineError && <p className="text-red-400 text-xs text-center">{outlineError}</p>}
+              {outline && (
+                <div className="rounded-xl bg-gray-900 border border-gray-700 p-4 space-y-3 text-sm">
+                  <div className="flex items-start gap-2">
+                    <span className="text-emerald-400 font-bold shrink-0">Intro</span>
+                    <span className="text-gray-300">{outline.opening}</span>
+                  </div>
+                  {outline.points.map((pt, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <span className="text-yellow-400 font-bold shrink-0">{i + 1}.</span>
+                      <span className="text-gray-300">{pt}</span>
+                    </div>
+                  ))}
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-400 font-bold shrink-0">End</span>
+                    <span className="text-gray-300">{outline.closing}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={handleShowExample}
+                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-lg rounded-xl transition-colors"
+              >
+                See Example &amp; Start 🎤
+              </button>
+              <button
+                onClick={() => { stopSpeaking(); setRecordingStarted(false); setStage("recording"); }}
+                className="w-full py-3 border border-gray-600 bg-gray-900 hover:bg-gray-800 text-gray-300 font-semibold rounded-xl transition-colors text-sm"
+              >
+                🎙 Start Recording Directly
+              </button>
+            </div>
           </div>
         )}
 
@@ -278,6 +345,8 @@ export default function CasualPage() {
               setRecordingStarted(false);
               setAiExample("");
               setAiExampleError("");
+              setOutline(null);
+              setOutlineError("");
               setStage("topic");
             }}
           />

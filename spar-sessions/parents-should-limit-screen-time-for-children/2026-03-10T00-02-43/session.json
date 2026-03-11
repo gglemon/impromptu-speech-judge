@@ -1,0 +1,64 @@
+{
+  "resolution": "Parents should limit screen time for children.",
+  "userSide": "aff",
+  "userName": "",
+  "aiSide": "neg",
+  "ai_constructive": "Hello, my name is AI Debate Agent, and I stand in negation of this resolution. I believe the criterion is that parents should make decisions based on what is best for their children's well-being. The resolution says parents should limit screen time, but I think that's not always the best idea.\n\nFirst, screen time can help kids learn new things. I watch videos on YouTube about science experiments, and it’s educational. If parents limit screen time, my brother can’t learn how to code or play games that teach strategy. Plus, many apps have lessons built in, so it helps kids grow smart. Finally, screen time helps kids connect with friends. My cousin is in another state, but we video chat, and it’s fun. If we can’t use screens, how do we stay in touch? This shows that screen time has good uses.\n\nSecond, too much screen time isn’t all bad, and limiting it might cause problems. If kids don’t use screens for homework or research, they might fall behind. I need my tablet for school apps, and if my mom takes it away, I can’t finish my math game that teaches math. Also, screens can be a break from stress. After a hard day at school, I like playing games to relax. If we can’t use screens, I get more upset. Lastly, parents know their kids best. My dad uses screens for work, and he says it’s fine for us too. We shouldn’t assume limits are always right.\n\nThird, limiting screen time could make kids feel guilty or misunderstood. I have anxiety, and screens help me calm down with apps. If my mom limits it, I feel like she doesn’t get me. Also, kids develop different skills with screens, like learning from tutorials. If we can’t use them, how do we learn? And it might push kids away from positive uses. Overall, screen time can be good if used right, and parents should guide it, not just ban it.\n\nIn conclusion, the resolution is too strict. Parents should teach kids how to use screens wisely, not just limit time. Vote against this resolution!",
+  "ai_rebuttal": "In my rebuttal, I need to argue against the affirmative side. They said too much screen time makes kids fat and lazy, but that's not always true. Not all screen time involves sitting around; my brother plays active games that get him moving. Plus, screens can help with learning, like educational apps that teach math. Also, the affirmative talked about screens showing bad things, but not all content is bad. I watch cool science videos that are safe, and parents can help kids pick good stuff. Finally, they said limiting screens helps kids learn without screens, but screens can be part of learning. For example, I use my tablet for school apps that help with homework. My point is, parents should guide screen use instead of just cutting it off. Vote against this resolution!",
+  "crossfire_questions": [
+    "You said screens can show mean or scary stuff, but what about educational shows or games that teach kids good things? Shouldn't parents teach kids to tell the difference instead of just limiting screen time?",
+    "You mentioned that screens can make kids lazy and fat, but what if kids use screens for exercise games or to learn about healthy eating? Doesn't that contradict your point about limiting all screen time?",
+    "You argued that limiting screens helps kids learn without screens, but in your own speech, you didn't mention that screens can be used for educational apps or research. How do you know limiting time is better if we don't know what they're doing online?"
+  ],
+  "user_constructive": "Arg 1: Too much screen time hurts kids' health.\n\n•\nSitting too long can make kids fat and lazy.\n•\nEyes get tired and maybe sick from too much TV.\nKeeping kids healthy and ready for school is the most important thing.\n\nArg 2: Screens can show bad things to kids.\n\n•\nTV and games have mean or scary stuff that kids don't understand.\n•\nBad websites might teach kids the wrong way to do things.\nKids need to learn good things from grown-ups, not from screens.\n\nArg 3: Limiting screens helps kids learn and grow better.\n\n•\nTime away from screens lets kids read books and play outside.\n•\nPlaying with friends or toys helps kids' brains grow strong.\nLearning without screens helps kids be smart and ready for the future.",
+  "user_crossfire": "[Q1] User asks: If screen time is so educational, why did you say your brother can’t learn coding without it? Doesn’t he learn more when he plays games?\n\n[Q1] User responds: Even though some screens teach good things, there's a lot of junk out there that kids can accidentally stumble into. Just like adults don't watch everything, kids need limits to stay safe. Teaching them to tell the difference is important, but we can't wait until bad stuff happens to learn that lesson. Limits help protect them while we teach.",
+  "user_rebuttal": "In my rebuttal, I'm going to counter the opponent's arguments. First, they said screen time helps kids learn, but not all online stuff is safe or educational—it can have mean things or make kids lazy. Second, they think limiting screen time might cause problems, but without limits, kids could get sick or see bad content. Third, they say kids need screens to connect with friends, but we can still stay in touch without screens, and too much screen time can make kids feel lonely if they're always on devices. I'll end by saying parents should set limits to keep kids healthy and safe, and vote for the resolution!",
+  "feedback": {
+    "overall_score": 8,
+    "overall_summary": "The affirmative performed well by providing clear arguments supported by examples, though their refutation was generic and lacked depth.",
+    "constructive": {
+      "score": 8.5,
+      "feedback": "The constructive speech effectively addressed the topic with logical arguments and examples, showing a good grasp of the resolution's core issues.",
+      "ratings": {
+        "content": 9,
+        "structure": 8,
+        "delivery": 8
+      }
+    },
+    "crossfire": {
+      "score": 7,
+      "feedback": "The crossfire response was thoughtful but could have been more engaging by directly addressing the AI's points with counterexamples.",
+      "ratings": {
+        "cross_examination": 7,
+        "delivery": 7
+      }
+    },
+    "rebuttal": {
+      "score": 6.5,
+      "feedback": "The rebuttal was effective in content but failed to directly engage with the AI's specific arguments, relying on generic responses instead of targeted refutation.",
+      "ratings": {
+        "content": 7,
+        "refutation": 5,
+        "delivery": 7
+      }
+    },
+    "strengths": [
+      "Strong content with clear arguments",
+      "Effective delivery in constructive and crossfire",
+      "Good use of examples to support claims"
+    ],
+    "improvements": [
+      {
+        "aspect": "Refutation",
+        "issue": "Lack of direct engagement with AI's arguments; focused on general statements rather than specific points.",
+        "suggestion": "Identify specific claims made by the AI and refute them point by point, citing evidence where possible."
+      },
+      {
+        "aspect": "Delivery",
+        "issue": "Rebuttal was slightly disorganized, lacking a clear structure.",
+        "suggestion": "Structure the rebuttal to address each of the AI's arguments in a logical sequence, ensuring each point is directly contested."
+      }
+    ]
+  },
+  "savedAt": "2026-03-10T00:02:43.537Z"
+}

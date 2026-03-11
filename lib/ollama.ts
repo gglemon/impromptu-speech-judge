@@ -13,7 +13,7 @@ export async function callOllama(prompt: string, signal?: AbortSignal): Promise<
       model: MODEL,
       messages: [{ role: "user", content: prompt }],
       stream: true,
-      think: false,
+      think: true,
     }),
     signal,
   });

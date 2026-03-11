@@ -303,9 +303,10 @@ export default function SparPage() {
   useEffect(() => { aiDifficultyRef.current = aiDifficulty; }, [aiDifficulty]);
   useEffect(() => { userSideRef.current = userSide; }, [userSide]);
 
-  const isFirstDifficultyRender = useRef(true);
+  const prevDifficultyRef = useRef<SparDifficulty>("medium");
   useEffect(() => {
-    if (isFirstDifficultyRender.current) { isFirstDifficultyRender.current = false; return; }
+    if (difficulty === prevDifficultyRef.current) return;
+    prevDifficultyRef.current = difficulty;
     const opts = pickTopicOptions(difficulty);
     setTopicOptions(opts);
     setSelectedTopic(opts[0]);
@@ -925,11 +926,11 @@ export default function SparPage() {
                       </div>
                       <div className="space-y-3">
                         <p className="text-xs font-semibold uppercase tracking-wider text-amber-400">Main Arguments</p>
-                        {prepHints.arguments.map((arg, i) => (
+                        {(prepHints.arguments ?? []).map((arg, i) => (
                           <div key={i} className="rounded-lg bg-gray-800/60 p-3 space-y-2 border border-gray-700/50">
                             <p className="font-semibold text-white">Arg {i + 1}: {arg.claim}</p>
                             <ul className="space-y-1">
-                              {arg.talkingPoints.map((pt, j) => (
+                              {(arg.talkingPoints ?? []).map((pt, j) => (
                                 <li key={j} className="flex gap-2 text-gray-300 leading-relaxed">
                                   <span className="text-amber-400 mt-0.5 flex-shrink-0">•</span>{pt}
                                 </li>
@@ -941,7 +942,7 @@ export default function SparPage() {
                       </div>
                       <div className="space-y-3">
                         <p className="text-xs font-semibold uppercase tracking-wider text-amber-400">Anticipated Counter-Arguments</p>
-                        {prepHints.counters.map((c, i) => (
+                        {(prepHints.counters ?? []).map((c, i) => (
                           <div key={i} className="rounded-lg bg-gray-800/60 p-3 space-y-1 border border-gray-700/50">
                             <p className="text-gray-400 text-xs italic">They may argue: &ldquo;{c.theyArgue}&rdquo;</p>
                             <p className="text-gray-200"><span className="text-green-400 font-semibold">Your rebuttal:</span> {c.yourRebuttal}</p>
