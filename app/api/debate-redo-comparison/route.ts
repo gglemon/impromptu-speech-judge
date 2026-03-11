@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rateLimiter";
-import { callOllama } from "@/lib/ollama";
+import { callLLM } from "@/lib/llm";
 
 export async function POST(req: NextRequest) {
   const { allowed, retryAfterMs } = checkRateLimit();
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
         ? "Use simple words a 3rd or 4th grader would understand. Keep it friendly and encouraging."
         : "Use clear language a 5th or 6th grader would understand. Be specific and encouraging.";
 
-    const text = await callOllama(
+    const text = await callLLM(
       `You are a debate coach comparing a student's original argument to their redo attempt.
 
 Resolution: "${resolution}"

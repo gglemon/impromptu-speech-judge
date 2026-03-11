@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { callOllama } from "@/lib/ollama";
+import { callLLM } from "@/lib/llm";
 
 export async function POST(req: NextRequest) {
   try {
@@ -59,7 +59,7 @@ Return ONLY valid JSON (no markdown, no code blocks, no thinking tags):
 { "suggestions": ["<response 1>", "<response 2>", "<response 3>"] }`;
     }
 
-    const text = await callOllama(prompt, req.signal);
+    const text = await callLLM(prompt, req.signal);
     const cleaned = text.replace(/<think>[\s\S]*?<\/think>/g, "").trim().replace(/```json|```/g, "").trim();
     const sanitized = cleaned.replace(/"((?:[^"\\]|\\.)*)"/g, (_, inner) =>
       `"${inner.replace(/[\x00-\x1F\x7F]/g, (c: string) => ({ "\n": "\\n", "\r": "\\r", "\t": "\\t" } as Record<string, string>)[c] ?? "")}"`

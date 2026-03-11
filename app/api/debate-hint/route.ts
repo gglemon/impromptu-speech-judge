@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rateLimiter";
-import { callOllama } from "@/lib/ollama";
+import { callLLM } from "@/lib/llm";
 
 export async function POST(req: NextRequest) {
   const { allowed, retryAfterMs } = checkRateLimit();
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
             .join("\n")}`
         : "";
 
-    const text = await callOllama(
+    const text = await callLLM(
       `You are a friendly debate coach helping a student come up with an argument.
 
 Resolution: "${resolution}"

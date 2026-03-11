@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rateLimiter";
-import { callOllama } from "@/lib/ollama";
+import { callLLM } from "@/lib/llm";
 
 export async function POST(req: NextRequest) {
   const { allowed, retryAfterMs } = checkRateLimit();
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     const userSideLabel = userSide === "aff" ? "Affirmative" : "Negative";
     const aiSideLabel = userSide === "aff" ? "Negative" : "Affirmative";
 
-    const text = await callOllama(
+    const text = await callLLM(
       `You are an expert SPAR debate judge evaluating ${userName}'s performance. They argued the ${userSideLabel} side of the following resolution:
 
 Resolution: ${resolution}

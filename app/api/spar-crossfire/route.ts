@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { callOllama } from "@/lib/ollama";
+import { callLLM } from "@/lib/llm";
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
       ? "Use language a 5th or 6th grade student would understand: clear vocabulary, focused questions, logical reasoning."
       : "Use language a middle school or high school student would understand: precise vocabulary, pointed analytical questions.";
 
-    const text = await callOllama(
+    const text = await callLLM(
       `You are a skilled debater preparing crossfire questions for a SPAR debate.
 
 LANGUAGE STYLE: ${languageStyle}

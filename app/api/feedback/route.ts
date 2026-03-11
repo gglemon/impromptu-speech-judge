@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rateLimiter";
-import { callOllama } from "@/lib/ollama";
+import { callLLM } from "@/lib/llm";
 
 export async function POST(req: NextRequest) {
   const { allowed, retryAfterMs } = checkRateLimit();
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     const targetMinutes = Math.round(targetSeconds / 60);
     const lowerBound = Math.round(targetSeconds * 0.8); // 80% of target
 
-    const text = await callOllama(
+    const text = await callLLM(
       `You are an expert impromptu speech judge. Evaluate the following speech using the three standard ballot pillars: Content, Organization, and Delivery.
 
 Topic: ${topic}

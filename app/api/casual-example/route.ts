@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rateLimiter";
-import { callOllama } from "@/lib/ollama";
+import { callLLM } from "@/lib/llm";
 
 export async function POST(req: NextRequest) {
   const { allowed, retryAfterMs } = checkRateLimit();
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     const { topic, speechLength = 60 } = await req.json();
     const wordTarget = Math.round((speechLength / 60) * 150);
 
-    const text = await callOllama(
+    const text = await callLLM(
       `Write a short example speech for an elementary school student.
 
 Topic: "${topic}"

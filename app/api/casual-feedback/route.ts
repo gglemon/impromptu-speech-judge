@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rateLimiter";
-import { callOllama } from "@/lib/ollama";
+import { callLLM } from "@/lib/llm";
 
 export async function POST(req: NextRequest) {
   const { allowed, retryAfterMs } = checkRateLimit();
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
       ? `The child's target was ${speechLength} seconds. They actually spoke for about ${Math.round(actualDuration)} seconds.`
       : "";
 
-    const text = await callOllama(
+    const text = await callLLM(
       `You are a kind and encouraging speech coach for elementary school children (ages 6-12). Evaluate the following speech in a simple, positive, and age-appropriate way.
 
 Topic: ${topic}
@@ -28,7 +28,13 @@ ${transcript}
 ${durationNote ? `\n${durationNote}\n` : ""}
 Be warm, encouraging, and use simple words. Focus on what the child did well and give one gentle tip.
 
-Also write a short example speech on the same topic. Write it like a confident 3rd or 4th grader: short sentences, simple everyday words, concrete examples from school or home. The example should be about ${wordTarget} words (matching a ${speechLength}-second speech).
+Also rewrite the student's speech as a polished example. STRICT RULES for the example:
+- Every idea, point, and example in the example MUST come directly from the student's transcript — do NOT invent new ideas, new examples, or new topics that the student did not mention
+- Mirror the student's exact speech structure sentence by sentence: if they said something first, say it first; if they gave a personal story, polish that same story; if they made 3 points, polish those same 3 points in the same order
+- Only improve HOW things are said: word choices, sentence flow, transitions, vivid details — never WHAT is said
+- If the student's speech is short or thin, make the example equally short — do not pad with new content
+- Write like a confident 3rd or 4th grader: short sentences, simple everyday words
+- About ${wordTarget} words (matching a ${speechLength}-second speech)
 
 Return ONLY valid JSON in this exact format (no markdown, no code blocks, no thinking tags):
 {
@@ -38,7 +44,7 @@ Return ONLY valid JSON in this exact format (no markdown, no code blocks, no thi
   "highlights": ["<something specific they did well>", "<another thing they did well>"],
   "tip": "<one friendly, simple suggestion for next time>",
   "length_note": "<one short sentence about whether they spoke close to their ${speechLength}-second target — praise if close, gently encourage if too short or too long>",
-  "ai_example": "<example speech of about ${wordTarget} words on the same topic, written as a 3rd or 4th grader would say it>"
+  "ai_example": "<example speech of about ${wordTarget} words — same topic, same structure as the student's speech, but with clearer language, stronger details, and better transitions>"
 }`
     , req.signal);
 

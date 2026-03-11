@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { callOllama } from "@/lib/ollama";
+import { callLLM } from "@/lib/llm";
 
 function getLanguageStyle(difficulty: string): string {
   if (difficulty === "easy") return "Write as a 3rd or 4th grade student would speak: use short sentences, simple everyday words, and concrete real-life examples. Avoid complex vocabulary or abstract reasoning.";
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       ? "IMPORTANT: Make the strongest possible argument. Use airtight logic, anticipate counterarguments, and leave no obvious weaknesses."
       : "";
 
-    const text = await callOllama(
+    const text = await callLLM(
       `You are a competitive debater arguing the ${aiSide} side of this resolution.
 
 LANGUAGE STYLE: ${languageStyle}

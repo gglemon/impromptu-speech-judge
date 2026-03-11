@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rateLimiter";
-import { callOllama } from "@/lib/ollama";
+import { callLLM } from "@/lib/llm";
 
 export async function POST(req: NextRequest) {
   const { allowed, retryAfterMs } = checkRateLimit();
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
         ? `\nThe student's argument had these areas to improve:\n${improvements.map((s: string) => `- ${s}`).join("\n")}\nMake sure the example argument addresses these weaknesses.`
         : "";
 
-    const text = await callOllama(
+    const text = await callLLM(
       `You are a debate coach. Write a short example argument for a student to learn from.
 
 Resolution: "${resolution}"
