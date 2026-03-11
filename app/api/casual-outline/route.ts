@@ -36,7 +36,7 @@ Return ONLY valid JSON (no markdown, no code blocks, no thinking tags):
       req.signal
     );
 
-    parseLLMJson(text);
+    const outline = parseLLMJson(text);
     return NextResponse.json(outline);
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);
