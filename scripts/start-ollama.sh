@@ -1,5 +1,17 @@
 #!/bin/bash
-# Ensure Ollama is running and deepseek-r1 is loaded before starting the app
+# Only start Ollama/deepseek if LLM_PROVIDER is "ollama" (or not set)
+
+# Load .env.local if it exists
+if [ -f "$(dirname "$0")/../.env.local" ]; then
+  export $(grep -v '^#' "$(dirname "$0")/../.env.local" | grep 'LLM_PROVIDER' | xargs)
+fi
+
+LLM_PROVIDER="${LLM_PROVIDER:-ollama}"
+
+if [ "$LLM_PROVIDER" != "ollama" ]; then
+  echo "LLM_PROVIDER=$LLM_PROVIDER — skipping Ollama startup."
+  exit 0
+fi
 
 MODEL="deepseek-r1:latest"
 OLLAMA_URL="http://localhost:11434"
