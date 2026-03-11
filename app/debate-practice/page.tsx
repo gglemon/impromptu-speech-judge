@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import AudioRecorder from "@/components/AudioRecorder";
 import { getTopicsByDifficulty, type SparDifficulty } from "@/lib/sparTopics";
@@ -82,10 +82,10 @@ function CriterionRow({ label, original, redo }: { label: string; original: numb
   );
 }
 
-function TurnIndicator({ current, total }: { current: number; total: number }) {
+function TurnIndicator({ current, turns }: { current: number; turns: Array<{ side: "aff" | "neg"; round: number }> }) {
   return (
     <div className="flex justify-center gap-2">
-      {TURNS.slice(0, total * 2).map((t, i) => {
+      {turns.map((t, i) => {
         const isPast = i < current;
         const isCurrent = i === current;
         const dotColor = isPast
@@ -123,6 +123,8 @@ export default function DebatePracticePage() {
   const [difficulty, setDifficulty] = useState<SparDifficulty>("medium");
   const [practiceMode, setPracticeMode] = useState<"solo" | "friend">("solo");
   const [userSide, setUserSide] = useState<"aff" | "neg">("aff");
+  const [preferredSide, setPreferredSide] = useState<"aff" | "neg" | "random">("random");
+  const [singleSideMode, setSingleSideMode] = useState(false);
   const [numRounds, setNumRounds] = useState(3);
   const [currentTranscript, setCurrentTranscript] = useState("");
   const [currentFeedback, setCurrentFeedback] = useState<ArgumentFeedback | null>(null);
@@ -151,11 +153,21 @@ export default function DebatePracticePage() {
   const [exampleArgument, setExampleArgument] = useState("");
   const [exampleLoading, setExampleLoading] = useState(false);
   const [exampleError, setExampleError] = useState("");
+  const [exampleExplanation, setExampleExplanation] = useState("");
+  const [exampleExplanationLoading, setExampleExplanationLoading] = useState(false);
+  const [exampleExplanationError, setExampleExplanationError] = useState("");
 
-  const currentTurn = TURNS[turnIndex];
-  const isLastTurn = turnIndex === numRounds * 2 - 1;
+  const activeTurns = singleSideMode
+    ? TURNS.filter(t => t.side === userSide).slice(0, numRounds)
+    : TURNS.slice(0, numRounds * 2);
+  const currentTurn = activeTurns[turnIndex] ?? TURNS[0];
+  const isLastTurn = turnIndex === activeTurns.length - 1;
 
-  useEffect(() => { setTopic(pickTopic(difficulty)); }, [difficulty]);
+  const isFirstDifficultyRender = useRef(true);
+  useEffect(() => {
+    if (isFirstDifficultyRender.current) { isFirstDifficultyRender.current = false; return; }
+    setTopic(pickTopic(difficulty));
+  }, [difficulty]);
 
   function resetTurnInputs() {
     setCurrentTranscript("");
@@ -173,6 +185,8 @@ export default function DebatePracticePage() {
     setComparisonError("");
     setExampleArgument("");
     setExampleError("");
+    setExampleExplanation("");
+    setExampleExplanationError("");
   }
 
   async function fetchFeedback(transcript: string): Promise<ArgumentFeedback> {
@@ -292,6 +306,8 @@ export default function DebatePracticePage() {
   async function fetchExampleArgument(feedback: ArgumentFeedback, transcript: string) {
     setExampleArgument("");
     setExampleError("");
+    setExampleExplanation("");
+    setExampleExplanationError("");
     setExampleLoading(true);
     try {
       const res = await fetch("/api/debate-example-argument", {
@@ -309,10 +325,38 @@ export default function DebatePracticePage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed");
       setExampleArgument(data.argument);
+      // auto-fetch explanation
+      fetchExampleExplanation(transcript, data.argument);
     } catch (e) {
       setExampleError(e instanceof Error ? e.message : "Could not generate example");
     } finally {
       setExampleLoading(false);
+    }
+  }
+
+  async function fetchExampleExplanation(userTranscript: string, example: string) {
+    setExampleExplanation("");
+    setExampleExplanationError("");
+    setExampleExplanationLoading(true);
+    try {
+      const res = await fetch("/api/debate-example-explanation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userArgument: userTranscript,
+          exampleArgument: example,
+          side: currentTurn.side,
+          resolution: topic,
+          difficulty,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      setExampleExplanation(data.explanation);
+    } catch (e) {
+      setExampleExplanationError(e instanceof Error ? e.message : "Could not generate explanation");
+    } finally {
+      setExampleExplanationLoading(false);
     }
   }
 
@@ -348,15 +392,10 @@ export default function DebatePracticePage() {
       : null;
 
   // email state
-  const [emailAddress, setEmailAddress] = useState("");
-  const [emailSending, setEmailSending] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [emailError, setEmailError] = useState("");
 
   async function sendSummaryEmail() {
-    if (!emailAddress.trim()) return;
-    setEmailSending(true);
-    setEmailError("");
     const body = [
       `Debate Practice Summary`,
       `Resolution: "${topic}"`,
@@ -379,7 +418,7 @@ export default function DebatePracticePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          to: emailAddress.trim(),
+          to: "gglemon@gmail.com",
           subject: `Debate Practice: "${topic}"`,
           text: body,
         }),
@@ -389,10 +428,15 @@ export default function DebatePracticePage() {
       setEmailSent(true);
     } catch (e) {
       setEmailError(e instanceof Error ? e.message : "Could not send email");
-    } finally {
-      setEmailSending(false);
     }
   }
+
+  useEffect(() => {
+    if (stage === "complete" && results.length > 0 && !emailSent) {
+      sendSummaryEmail();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage]);
 
   // ── INTRO ────────────────────────────────────────────────────────────────
   if (stage === "intro") {
@@ -416,24 +460,33 @@ export default function DebatePracticePage() {
             />
           </div>
 
-          <div className="rounded-2xl border border-gray-700 bg-gray-900 p-6 space-y-3">
-            <p className="text-sm font-semibold text-gray-300">How it works</p>
-            <div className="space-y-2 text-sm">
-              {[1, 2, 3].map((r) => (
-                <div key={r} className="flex gap-3">
-                  <span className="w-24 text-purple-400 font-semibold shrink-0">AFF Round {r}</span>
-                  <span className="text-gray-400">{r === 1 ? "Argue FOR the resolution" : "Make a stronger affirmative argument"}</span>
-                </div>
-              ))}
-              {[1, 2, 3].map((r) => (
-                <div key={r} className="flex gap-3">
-                  <span className="w-24 text-orange-400 font-semibold shrink-0">NEG Round {r}</span>
-                  <span className="text-gray-400">{r === 1 ? "Argue AGAINST the resolution" : "Make a stronger negative argument"}</span>
-                </div>
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-gray-300 text-center">Your Side</p>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { value: "aff", label: "Affirmative", emoji: "✅" },
+                { value: "random", label: "Random", emoji: "🎲" },
+                { value: "neg", label: "Negative", emoji: "❌" },
+              ] as const).map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setPreferredSide(opt.value)}
+                  className={`py-2.5 rounded-xl text-sm font-semibold border transition-colors ${
+                    preferredSide === opt.value
+                      ? opt.value === "aff" ? "bg-purple-900 border-purple-600 text-purple-300"
+                        : opt.value === "neg" ? "bg-orange-900 border-orange-600 text-orange-300"
+                        : "bg-blue-900 border-blue-600 text-blue-300"
+                      : "bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500"
+                  }`}
+                >
+                  {opt.emoji} {opt.label}
+                </button>
               ))}
             </div>
-            <p className="text-xs text-gray-500 pt-1">
-              AI rates each argument on relevance, reasoning, and clarity. Use voice or text input.
+            <p className="text-xs text-gray-500 text-center">
+              {preferredSide === "aff" ? "You always argue FOR the resolution"
+                : preferredSide === "neg" ? "You always argue AGAINST the resolution"
+                : "AFF and NEG turns alternate for both sides"}
             </p>
           </div>
 
@@ -472,7 +525,7 @@ export default function DebatePracticePage() {
               ))}
             </div>
             <p className="text-xs text-gray-500 text-center">
-              {numRounds === 2 ? "4 total arguments (AFF×2 + NEG×2)" : ""}
+              {numRounds === 3 ? "" : ""}
             </p>
           </div>
 
@@ -514,7 +567,12 @@ export default function DebatePracticePage() {
           </div>
 
           <button
-            onClick={() => setStage("recording")}
+            onClick={() => {
+              const resolved: "aff" | "neg" = preferredSide === "random" ? (Math.random() < 0.5 ? "aff" : "neg") : preferredSide;
+              setUserSide(resolved);
+              setSingleSideMode(preferredSide !== "random");
+              setStage("recording");
+            }}
             className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-colors text-lg"
           >
             Start Practice
@@ -657,7 +715,7 @@ export default function DebatePracticePage() {
             )}
           </div>
 
-          <TurnIndicator current={turnIndex} total={numRounds} />
+          <TurnIndicator current={turnIndex} turns={activeTurns} />
         </div>
       </main>
     );
@@ -668,7 +726,7 @@ export default function DebatePracticePage() {
     const isAff = currentTurn.side === "aff";
     const sideLabel = isAff ? "AFFIRMATIVE" : "NEGATIVE";
     const labelColor = isAff ? "text-purple-400" : "text-orange-400";
-    const nextTurn = !isLastTurn ? TURNS[turnIndex + 1] : null;
+    const nextTurn = !isLastTurn ? activeTurns[turnIndex + 1] : null;
 
     return (
       <main className="min-h-screen flex flex-col items-center justify-center p-8">
@@ -757,9 +815,25 @@ export default function DebatePracticePage() {
               )}
               {exampleError && <p className="text-red-400 text-xs text-center">{exampleError}</p>}
               {exampleArgument && !exampleLoading && (
-                <div className="rounded-xl border border-blue-800 bg-blue-950 p-4 space-y-2">
-                  <p className="text-xs text-blue-400 font-semibold uppercase tracking-wide">AI Example Argument</p>
-                  <p className="text-blue-100 text-sm leading-relaxed">{exampleArgument}</p>
+                <div className="space-y-3">
+                  <div className="rounded-xl border border-blue-800 bg-blue-950 p-4 space-y-2">
+                    <p className="text-xs text-blue-400 font-semibold uppercase tracking-wide">AI Example Argument</p>
+                    <p className="text-blue-100 text-sm leading-relaxed">{exampleArgument}</p>
+                  </div>
+                  {/* Explanation of why the example is better */}
+                  {exampleExplanationLoading && (
+                    <div className="flex items-center gap-2 py-2 justify-center">
+                      <div className="w-4 h-4 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin" />
+                      <p className="text-yellow-400 text-xs">Explaining why this is stronger...</p>
+                    </div>
+                  )}
+                  {exampleExplanationError && <p className="text-red-400 text-xs text-center">{exampleExplanationError}</p>}
+                  {exampleExplanation && !exampleExplanationLoading && (
+                    <div className="rounded-xl border border-yellow-800 bg-yellow-950/40 p-4 space-y-1">
+                      <p className="text-xs text-yellow-400 font-semibold uppercase tracking-wide">💡 Why this is stronger</p>
+                      <p className="text-yellow-100 text-sm leading-relaxed">{exampleExplanation}</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -782,7 +856,7 @@ export default function DebatePracticePage() {
             </div>
           )}
 
-          <TurnIndicator current={turnIndex} total={numRounds} />
+          <TurnIndicator current={turnIndex} turns={activeTurns} />
         </div>
       </main>
     );
@@ -917,7 +991,7 @@ export default function DebatePracticePage() {
             </>
           )}
 
-          <TurnIndicator current={turnIndex} total={numRounds} />
+          <TurnIndicator current={turnIndex} turns={activeTurns} />
         </div>
       </main>
     );
@@ -982,30 +1056,13 @@ export default function DebatePracticePage() {
         </div>
 
         {/* Email summary */}
-        <div className="rounded-xl border border-gray-700 bg-gray-900 p-4 space-y-3">
-          <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Email Summary</p>
-          {emailSent ? (
-            <p className="text-green-400 text-sm text-center">Summary sent!</p>
-          ) : (
-            <div className="flex gap-2">
-              <input
-                type="email"
-                value={emailAddress}
-                onChange={(e) => setEmailAddress(e.target.value)}
-                placeholder="Enter email address"
-                className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:border-purple-500"
-              />
-              <button
-                onClick={sendSummaryEmail}
-                disabled={emailSending || !emailAddress.trim()}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white font-semibold rounded-xl transition-colors text-sm shrink-0"
-              >
-                {emailSending ? "Sending..." : "Send"}
-              </button>
-            </div>
-          )}
-          {emailError && <p className="text-red-400 text-xs">{emailError}</p>}
-        </div>
+        {emailSent ? (
+          <p className="text-green-400 text-sm text-center">Summary sent to gglemon@gmail.com ✓</p>
+        ) : emailError ? (
+          <p className="text-red-400 text-xs text-center">{emailError}</p>
+        ) : (
+          <p className="text-gray-500 text-xs text-center">Sending summary...</p>
+        )}
 
         <div className="flex gap-4">
           <button

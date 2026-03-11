@@ -242,7 +242,7 @@ export default function SparPage() {
   const userSideRef = useRef<"aff" | "neg">("aff");
 
   const [topicOptions, setTopicOptions] = useState<string[]>(() => pickTopicOptions("medium"));
-  const [selectedTopic, setSelectedTopic] = useState<string>("");
+  const [selectedTopic, setSelectedTopic] = useState<string>(topicOptions[0]);
   const [customTopicOpen, setCustomTopicOpen] = useState(false);
   const [aiData, setAiData] = useState<AiData | null>(null);
   const [aiGenerating, setAiGenerating] = useState(false);
@@ -303,7 +303,9 @@ export default function SparPage() {
   useEffect(() => { aiDifficultyRef.current = aiDifficulty; }, [aiDifficulty]);
   useEffect(() => { userSideRef.current = userSide; }, [userSide]);
 
+  const isFirstDifficultyRender = useRef(true);
   useEffect(() => {
+    if (isFirstDifficultyRender.current) { isFirstDifficultyRender.current = false; return; }
     const opts = pickTopicOptions(difficulty);
     setTopicOptions(opts);
     setSelectedTopic(opts[0]);
