@@ -184,6 +184,9 @@ function pickTopicOptions(diff: SparDifficulty): string[] {
   return shuffled.slice(0, 3);
 }
 
+// Computed once at module load — stable across re-renders and Strict Mode remounts
+const initialTopics = pickTopicOptions("medium");
+
 function TransitionCountdown({ onDone }: { onDone: () => void }) {
   const [count, setCount] = useState(10);
   const onDoneRef = useRef(onDone);
@@ -241,8 +244,8 @@ export default function SparPage() {
   const [transitionData, setTransitionData] = useState<{ nextPhaseIdx: number; label: string } | null>(null);
   const userSideRef = useRef<"aff" | "neg">("aff");
 
-  const [topicOptions, setTopicOptions] = useState<string[]>(() => pickTopicOptions("medium"));
-  const [selectedTopic, setSelectedTopic] = useState<string>(topicOptions[0]);
+  const [topicOptions, setTopicOptions] = useState<string[]>(initialTopics);
+  const [selectedTopic, setSelectedTopic] = useState<string>(initialTopics[0]);
   const [customTopicOpen, setCustomTopicOpen] = useState(false);
   const [aiData, setAiData] = useState<AiData | null>(null);
   const [aiGenerating, setAiGenerating] = useState(false);

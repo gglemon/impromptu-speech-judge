@@ -8,6 +8,9 @@ import { getRandomTwister } from "@/lib/tongueTwisters";
 type Difficulty = "easy" | "medium" | "hard";
 type Stage = "setup" | "ready" | "processing" | "feedback";
 
+// Computed once at module load — stable across re-renders and Strict Mode remounts
+const initialTwister = getRandomTwister("easy").text;
+
 interface TwisterFeedback {
   accuracy: number;
   fluency: number;
@@ -30,7 +33,7 @@ function ScoreRing({ value, label, color }: { value: number; label: string; colo
 
 export default function TongueTwistersPage() {
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
-  const [twister, setTwister] = useState(() => getRandomTwister("easy").text);
+  const [twister, setTwister] = useState(initialTwister);
   const [repetitions, setRepetitions] = useState(3);
   const [stage, setStage] = useState<Stage>("setup");
   const [transcript, setTranscript] = useState("");

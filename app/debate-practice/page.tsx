@@ -10,6 +10,9 @@ function pickTopic(diff: SparDifficulty): string {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
+// Computed once at module load — stable across re-renders and Strict Mode remounts
+const initialTopic = pickTopic("medium");
+
 interface CriterionScores {
   relevance: number;
   reasoning: number;
@@ -117,7 +120,7 @@ function advanceState(
 }
 
 export default function DebatePracticePage() {
-  const [topic, setTopic] = useState<string>(() => pickTopic("medium"));
+  const [topic, setTopic] = useState<string>(initialTopic);
   const [stage, setStage] = useState<Stage>("intro");
   const [turnIndex, setTurnIndex] = useState(0);
   const [difficulty, setDifficulty] = useState<SparDifficulty>("medium");
