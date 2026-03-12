@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { type SparDifficulty } from "@/lib/sparTopics";
 
@@ -20,6 +20,18 @@ export default function SparSetupPage() {
   const [difficulty, setDifficulty] = useState<SparDifficulty>("medium");
   const [opponent, setOpponent] = useState<"ai" | "friend">("ai");
   const [aiStrength, setAiStrength] = useState<AiStrength>("medium");
+
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem("spar:settings");
+      if (saved) {
+        const s = JSON.parse(saved);
+        if (s.difficulty === "easy" || s.difficulty === "medium" || s.difficulty === "hard") setDifficulty(s.difficulty);
+        if (s.opponent === "ai" || s.opponent === "friend") setOpponent(s.opponent);
+        if (s.aiDifficulty === "easy" || s.aiDifficulty === "medium" || s.aiDifficulty === "hard") setAiStrength(s.aiDifficulty);
+      }
+    } catch {}
+  }, []);
 
   function handleStart() {
     try {
