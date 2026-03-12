@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useSession, signIn } from "next-auth/react";
 import AudioRecorder from "@/components/AudioRecorder";
 import AudioPlayer from "@/components/AudioPlayer";
 import CasualFeedbackReport from "@/components/CasualFeedbackReport";
@@ -20,6 +21,7 @@ interface CasualFeedback {
 }
 
 export default function CasualPage() {
+  const { data: session } = useSession();
   const [stage, setStage] = useState<Stage>("loading");
   const [topic, setTopic] = useState("");
   const [transcript, setTranscript] = useState("");
@@ -185,20 +187,29 @@ export default function CasualPage() {
 
             <p className="text-gray-400">Take a breath, then press the button when you are ready to talk!</p>
 
-            {/* AI Outline */}
+            {/* AI Outline + AI Speech row */}
             <div className="space-y-3 text-left">
-              <button
-                onClick={handleShowOutline}
-                disabled={outlineLoading || !topic.trim()}
-                className="w-full py-2.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-40 border border-gray-600 text-gray-300 text-sm font-semibold rounded-xl transition-colors"
-              >
-                {outlineLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin inline-block" />
-                    Building outline...
-                  </span>
-                ) : outline ? "🔄 Regenerate Outline" : "📋 Get AI Outline"}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleShowOutline}
+                  disabled={outlineLoading || !topic.trim()}
+                  className="flex-1 py-2.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-40 border border-gray-600 text-gray-300 text-sm font-semibold rounded-xl transition-colors cursor-pointer"
+                >
+                  {outlineLoading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin inline-block" />
+                      Building...
+                    </span>
+                  ) : outline ? "Regenerate Outline" : "AI Outline"}
+                </button>
+                <button
+                  onClick={handleShowExample}
+                  disabled={!topic.trim()}
+                  className="flex-1 py-2.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-40 border border-gray-600 text-gray-300 text-sm font-semibold rounded-xl transition-colors cursor-pointer"
+                >
+                  AI Speech
+                </button>
+              </div>
               {outlineError && <p className="text-red-400 text-xs text-center">{outlineError}</p>}
               {outline && (
                 <div className="rounded-xl bg-gray-900 border border-gray-700 p-4 space-y-3 text-sm">
@@ -220,20 +231,15 @@ export default function CasualPage() {
               )}
             </div>
 
-            <div className="flex flex-col gap-3">
-              <button
-                onClick={handleShowExample}
+            <button
+              onClick={() => {
+                if (!session?.user) { signIn("google"); return; }
+                stopSpeaking(); setRecordingStarted(false); setStage("recording");
+              }}
               className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-bold text-lg rounded-xl transition-all duration-200 cursor-pointer shadow-lg shadow-emerald-500/20"
-              >
-                See Example &amp; Start 🎤
-              </button>
-              <button
-                onClick={() => { stopSpeaking(); setRecordingStarted(false); setStage("recording"); }}
-              className="w-full py-3 border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] text-slate-300 font-semibold rounded-xl transition-all duration-200 cursor-pointer text-sm"
-              >
-                🎙 Start Recording Directly
-              </button>
-            </div>
+            >
+              Start Recording
+            </button>
           </div>
         )}
 

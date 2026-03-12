@@ -3,15 +3,18 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession, signIn } from "next-auth/react";
 import { type SparDifficulty } from "@/lib/sparTopics";
 
 export default function DebatePracticeSetupPage() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [difficulty, setDifficulty] = useState<SparDifficulty>("medium");
   const [mode, setMode] = useState<"solo" | "friend">("solo");
   const [rounds, setRounds] = useState(3);
 
   function handleStart() {
+    if (!session?.user) { signIn("google"); return; }
     try {
       sessionStorage.setItem("debate:settings", JSON.stringify({ difficulty, mode, rounds }));
     } catch {}

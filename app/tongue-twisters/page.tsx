@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
+import { useSession, signIn } from "next-auth/react";
 import AudioRecorder from "@/components/AudioRecorder";
 import { getRandomTwister } from "@/lib/tongueTwisters";
 
@@ -38,6 +39,7 @@ function ScoreRing({ value, label, color }: { value: number; label: string; colo
 }
 
 export default function TongueTwistersPage() {
+  const { data: session } = useSession();
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const [twister, setTwister] = useState<string>("");
   const [repetitions, setRepetitions] = useState(3);
@@ -208,10 +210,10 @@ export default function TongueTwistersPage() {
             </div>
 
             <button
-              onClick={() => setStage("ready")}
+              onClick={() => { if (!session?.user) { signIn("google"); return; } setStage("ready"); }}
               className="w-full py-4 bg-pink-600 hover:bg-pink-500 active:scale-[0.99] text-white font-bold text-lg rounded-xl transition-all duration-200 cursor-pointer shadow-lg shadow-pink-500/20"
             >
-              Ready to Practice! 👅
+              Ready for Practice
             </button>
           </div>
         )}
