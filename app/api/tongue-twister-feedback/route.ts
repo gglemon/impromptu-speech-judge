@@ -13,28 +13,18 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { twister, transcript, repetitions } = await req.json();
+    const { twister, transcript } = await req.json();
 
     const text = await callLLM(
-      `You are a fun speech coach helping a student practice tongue twisters.
+      `You are a speech coach grading a tongue twister attempt. Reply ONLY with valid JSON, no other text.
 
-Target tongue twister: "${twister}"
-Times to repeat: ${repetitions}
-What the student actually said: "${transcript}"
+Tongue twister: "${twister}"
+Student said: "${transcript}"
 
-Compare what the student said to the target. The student should have said it ${repetitions} time(s) in a row.
+Score accuracy (0-10): how closely did the words match? Small pronunciation variations are OK.
+Score fluency (0-10): how smooth and clear was the delivery?
 
-Score their accuracy (0-10): how closely did the words match? Small pronunciation variations are OK, but missing or garbled words should lower the score.
-Score their fluency (0-10): did they sound smooth and clear, or did they stumble a lot?
-
-Return ONLY valid JSON (no markdown, no code blocks, no thinking tags):
-{
-  "accuracy": <number 0-10 with one decimal>,
-  "fluency": <number 0-10 with one decimal>,
-  "summary": "<1-2 fun, encouraging sentences about their attempt>",
-  "tricky_parts": ["<word or phrase they likely stumbled on>"],
-  "tip": "<one specific tip to say it better next time>"
-}`,
+{"accuracy":<0-10.0>,"fluency":<0-10.0>,"summary":"<1-2 encouraging sentences>","tricky_parts":["<word/phrase>"],"tip":"<one tip>"}`,
       req.signal
     );
 

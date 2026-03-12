@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import AudioPlayer from "@/components/AudioPlayer";
 
 interface CasualFeedback {
@@ -29,8 +29,12 @@ export default function CasualFeedbackReport({ feedback, topic, transcript, audi
   const [explanationLoading, setExplanationLoading] = useState(false);
   const [explanationError, setExplanationError] = useState("");
   const [explanationFetched, setExplanationFetched] = useState(false);
+  const emailSentRef = useRef(false);
 
   useEffect(() => {
+    if (emailSentRef.current) return;
+    emailSentRef.current = true;
+
     const body = [
       `Free Talk Summary`,
       `Topic: "${topic}"`,

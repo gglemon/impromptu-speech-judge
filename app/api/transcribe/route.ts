@@ -5,9 +5,11 @@ import { join } from "path";
 import { spawn } from "child_process";
 import { tmpdir } from "os";
 
+const FFMPEG_BIN = process.env.FFMPEG_BIN ?? "/opt/homebrew/bin/ffmpeg";
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const STT_PROVIDER = process.env.STT_PROVIDER ?? "groq";
 const WHISPER_BIN = process.env.WHISPER_BIN ?? "/opt/homebrew/bin/whisper-cli";
 const WHISPER_MODEL = process.env.WHISPER_MODEL ?? "/usr/local/share/whisper/ggml-base.bin";
-const FFMPEG_BIN = process.env.FFMPEG_BIN ?? "/opt/homebrew/bin/ffmpeg";
 
 const RECORDINGS_DIR = join(process.cwd(), "public", "recordings");
 const TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
@@ -40,8 +42,50 @@ async function cleanupOldRecordings() {
         })
     );
   } catch {
-    // best-effort, don't fail the request
+    // best-effort
   }
+}
+
+async function transcribeGroq(mp3Path: string): Promise<string> {
+  if (!GROQ_API_KEY) throw new Error("GROQ_API_KEY is not set");
+  const { readFile } = await import("fs/promises");
+  const audioBuffer = await readFile(mp3Path);
+  const audioBlob = new Blob([audioBuffer], { type: "audio/mpeg" });
+
+  const formData = new FormData();
+  formData.append("file", audioBlob, "audio.mp3");
+  formData.append("model", "whisper-large-v3");
+  formData.append("language", "en");
+  formData.append("response_format", "json");
+
+  const res = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+    method: "POST",
+    headers: { authorization: `Bearer ${GROQ_API_KEY}` },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({})) as { error?: { message?: string } };
+    throw new Error(err.error?.message ?? `Groq error ${res.status}`);
+  }
+
+  const data = await res.json() as { text: string };
+  return data.text.trim();
+}
+
+async function transcribeWhisper(wavPath: string): Promise<string> {
+  const { stdout } = await run(WHISPER_BIN, [
+    "-m", WHISPER_MODEL,
+    "-f", wavPath,
+    "--language", "auto",
+    "--output-txt",
+    "--no-prints",
+  ]);
+  return stdout
+    .split("\n")
+    .map((l) => l.replace(/\[\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}\]\s*/g, "").trim())
+    .filter(Boolean)
+    .join(" ");
 }
 
 export async function POST(req: NextRequest) {
@@ -55,7 +99,6 @@ export async function POST(req: NextRequest) {
   const mp3Path = join(RECORDINGS_DIR, `${id}.mp3`);
   const wavPath = join(tmpDir, `${id}.wav`);
 
-  // Lazy cleanup — run in background, don't await
   cleanupOldRecordings();
 
   try {
@@ -63,42 +106,33 @@ export async function POST(req: NextRequest) {
     const audioBlob = formData.get("audio") as File;
     if (!audioBlob) return NextResponse.json({ error: "No audio provided" }, { status: 400 });
 
-    // Save raw WebM to temp (browser MediaRecorder output has bad container headers)
     const buffer = Buffer.from(await audioBlob.arrayBuffer());
     await writeFile(rawWebmPath, buffer);
 
-    // Single ffmpeg pass: produce MP3 for playback + 16kHz WAV for Whisper.
-    // -fflags +genpts regenerates timestamps, fixing the non-monotonic DTS
-    // caused by MediaRecorder timeslice chunks concatenated into one Blob.
-    await run(FFMPEG_BIN, [
-      "-y", "-fflags", "+genpts", "-i", rawWebmPath,
-      // MP3 for browser playback (native sample rate preserved)
-      "-q:a", "4", mp3Path,
-      // 16kHz mono WAV for Whisper transcription
-      "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", wavPath,
-    ]);
+    let transcript: string;
 
-    // Transcribe with whisper-cli (auto-detect language, works for Chinese and English)
-    const { stdout } = await run(WHISPER_BIN, [
-      "-m", WHISPER_MODEL,
-      "-f", wavPath,
-      "--language", "auto",
-      "--output-txt",
-      "--no-prints",
-    ]);
-
-    const transcript = stdout
-      .split("\n")
-      .map((l) => l.replace(/\[\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}\]\s*/g, "").trim())
-      .filter(Boolean)
-      .join(" ");
+    if (STT_PROVIDER === "groq") {
+      // Convert WebM → MP3 (for playback + Groq)
+      await run(FFMPEG_BIN, [
+        "-y", "-fflags", "+genpts", "-i", rawWebmPath,
+        "-q:a", "4", mp3Path,
+      ]);
+      transcript = await transcribeGroq(mp3Path);
+    } else {
+      // Convert WebM → MP3 (playback) + WAV (Whisper)
+      await run(FFMPEG_BIN, [
+        "-y", "-fflags", "+genpts", "-i", rawWebmPath,
+        "-q:a", "4", mp3Path,
+        "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", wavPath,
+      ]);
+      transcript = await transcribeWhisper(wavPath);
+    }
 
     return NextResponse.json({ transcript, duration_seconds: 0, audioUrl: `/recordings/${id}.mp3` });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: message }, { status: 500 });
   } finally {
-    // Clean up temp files; MP3 is kept for replay
     for (const f of [rawWebmPath, wavPath]) {
       try { await unlink(f); } catch {}
     }

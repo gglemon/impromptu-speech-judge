@@ -8,7 +8,7 @@ import AudioPlayer from "@/components/AudioPlayer";
 import CasualFeedbackReport from "@/components/CasualFeedbackReport";
 import { casualTopics } from "@/lib/casualTopics";
 
-type Stage = "loading" | "topic" | "preview" | "recording" | "processing" | "feedback";
+type Stage = "loading" | "topic" | "practice" | "recording" | "processing" | "feedback";
 
 interface CasualFeedback {
   score: number;
@@ -78,7 +78,6 @@ export default function CasualPage() {
     setAiExample("");
     setAiExampleError("");
     setAiExampleLoading(true);
-    setStage("preview");
     try {
       const res = await fetch("/api/casual-example", {
         method: "POST",
@@ -190,9 +189,27 @@ export default function CasualPage() {
               </div>
             </div>
 
-            <p className="text-gray-400">Take a breath, then press the button when you are ready to talk!</p>
+            <button
+              onClick={() => {
+                if (!session?.user) { signIn("google"); return; }
+                stopSpeaking(); setStage("practice");
+              }}
+              className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-bold text-lg rounded-xl transition-all duration-200 cursor-pointer shadow-lg shadow-emerald-500/20"
+            >
+              Start Practice
+            </button>
+          </div>
+        )}
 
-            {/* AI Outline + AI Speech row */}
+        {/* Practice: AI tools + Start Recording */}
+        {stage === "practice" && (
+          <div className="space-y-6">
+            <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/25 p-5 text-center">
+              <p className="text-emerald-300 text-sm font-medium uppercase tracking-wide mb-1">Your Topic</p>
+              <p className="text-xl font-semibold text-white">{topic}</p>
+              <p className="text-emerald-400 text-xs mt-1">Target: {speechLength < 60 ? `${speechLength}s` : `${speechLength / 60} min`}</p>
+            </div>
+
             <div className="space-y-3 text-left">
               <div className="flex gap-2">
                 <button
@@ -209,12 +226,18 @@ export default function CasualPage() {
                 </button>
                 <button
                   onClick={handleShowExample}
-                  disabled={!topic.trim()}
+                  disabled={aiExampleLoading || !topic.trim()}
                   className="flex-1 py-2.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-40 border border-gray-600 text-gray-300 text-sm font-semibold rounded-xl transition-colors cursor-pointer"
                 >
-                  AI Speech
+                  {aiExampleLoading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin inline-block" />
+                      Writing...
+                    </span>
+                  ) : aiExample ? "Regenerate Speech" : "AI Speech"}
                 </button>
               </div>
+
               {outlineError && <p className="text-red-400 text-xs text-center">{outlineError}</p>}
               {outline && (
                 <div className="rounded-xl bg-gray-900 border border-gray-700 p-4 space-y-3 text-sm">
@@ -234,41 +257,12 @@ export default function CasualPage() {
                   </div>
                 </div>
               )}
-            </div>
 
-            <button
-              onClick={() => {
-                if (!session?.user) { signIn("google"); return; }
-                stopSpeaking(); setRecordingStarted(false); setStage("recording");
-              }}
-              className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-bold text-lg rounded-xl transition-all duration-200 cursor-pointer shadow-lg shadow-emerald-500/20"
-            >
-              Start Recording
-            </button>
-          </div>
-        )}
-
-        {/* Preview: AI example speech */}
-        {stage === "preview" && (
-          <div className="space-y-6">
-            <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/25 p-5 text-center">
-              <p className="text-emerald-300 text-sm font-medium uppercase tracking-wide mb-1">Your Topic</p>
-              <p className="text-xl font-semibold text-white">{topic}</p>
-              <p className="text-emerald-400 text-xs mt-1">Target: {speechLength < 60 ? `${speechLength}s` : `${speechLength / 60} min`}</p>
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-sm font-semibold text-gray-300 text-center">✨ AI Example Speech</p>
-              {aiExampleLoading ? (
-                <div className="flex items-center gap-3 py-8 justify-center">
-                  <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-gray-400 text-sm">Writing example...</p>
-                </div>
-              ) : aiExampleError ? (
-                <p className="text-red-400 text-sm text-center">{aiExampleError}</p>
-              ) : aiExample ? (
+              {aiExampleError && <p className="text-red-400 text-xs text-center">{aiExampleError}</p>}
+              {aiExample && (
                 <div className="rounded-xl bg-gray-800 border border-gray-700 p-5 space-y-3">
-                  <div className="flex justify-end">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">AI Example Speech</p>
                     {isSpeaking ? (
                       <button onClick={stopSpeaking} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-900/60 border border-red-700 text-red-300 text-xs font-semibold">
                         ■ Stop
@@ -281,15 +275,14 @@ export default function CasualPage() {
                   </div>
                   <p className="text-gray-200 text-sm leading-relaxed">{aiExample}</p>
                 </div>
-              ) : null}
+              )}
             </div>
 
-            <p className="text-gray-400 text-center text-sm">Read the example, then give your own speech!</p>
             <button
-              onClick={() => { if (!session?.user) { signIn("google"); return; } stopSpeaking(); setStage("recording"); }}
+              onClick={() => { stopSpeaking(); setRecordingStarted(false); setStage("recording"); }}
               className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-bold text-lg rounded-xl transition-all duration-200 cursor-pointer shadow-lg shadow-emerald-500/20"
             >
-              Start Speaking 🎤
+              Start Recording
             </button>
           </div>
         )}

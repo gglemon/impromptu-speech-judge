@@ -15,7 +15,10 @@ export async function callOpenRouter(prompt: string, signal?: AbortSignal): Prom
     },
     body: JSON.stringify({
       model,
-      messages: [{ role: "user", content: prompt }],
+      messages: [
+        { role: "system", content: "You are a helpful assistant. Respond directly and concisely. Do not use thinking blocks or internal reasoning tags." },
+        { role: "user", content: prompt },
+      ],
       stream: true,
       max_tokens: Number(process.env.OPENROUTER_MAX_TOKENS ?? 2048),
     }),

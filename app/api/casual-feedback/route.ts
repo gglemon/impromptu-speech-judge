@@ -14,8 +14,9 @@ export async function POST(req: NextRequest) {
   try {
     const { topic, transcript, speechLength = 60, actualDuration } = await req.json();
     const wordTarget = Math.round((speechLength / 60) * 150);
+    const pct = actualDuration != null ? Math.round(actualDuration / speechLength * 100) : null;
     const durationNote = actualDuration != null
-      ? `The child's target was ${speechLength} seconds. They actually spoke for about ${Math.round(actualDuration)} seconds.`
+      ? `Target: ${speechLength}s. Actual: ~${Math.round(actualDuration)}s (${pct}% of target). Score penalty: <50% → -2pts, 50-80% → -1pt, 80-120% → no penalty, >150% → no penalty.`
       : "";
 
     const text = await callLLM(

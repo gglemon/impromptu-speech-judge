@@ -31,6 +31,7 @@ export default function HeaderAuth() {
               sessionStorage.removeItem("debate:settings");
               sessionStorage.removeItem("debate:topic");
               sessionStorage.removeItem("tt:difficulty");
+              sessionStorage.removeItem("casual:topic");
               ["easy", "medium", "hard"].forEach(d => sessionStorage.removeItem(`tt:twister:${d}`));
             } catch {}
             signOut({ callbackUrl: "/" });
