@@ -17,14 +17,14 @@ A native iOS app that mirrors the Speech & Debate web app's five practice modes.
 |-----------|----------|
 | Framework | Expo (managed workflow) |
 | Routing | Expo Router v4 (file-based, like Next.js App Router) |
-| Styling | NativeWind v4 (Tailwind classes on React Native) |
+| Styling | NativeWind v4 + `expo-linear-gradient` + `expo-blur` |
 | Platform | iOS only (iPhone + iPad) |
-| Auth | Google Sign-In via `expo-auth-session` |
-| Audio | `expo-av` (record + playback) |
-| TTS | `expo-speech` (replaces `window.speechSynthesis`) |
+| Auth | Google Sign-In via `expo-auth-session` (frontend only — APIs are unprotected) |
+| Audio | `expo-av` (record M4A + playback) |
+| TTS | `expo-speech` with `rate` param (replaces `window.speechSynthesis`) |
 | Storage | `AsyncStorage` (replaces `sessionStorage`) |
-| Secure storage | `expo-secure-store` (Google token) |
-| Backend | Existing Next.js deployment — all `/api/*` routes reused as-is |
+| Secure storage | `expo-secure-store` (Google token, user info) |
+| Backend | Existing Next.js deployment — all `/api/*` routes reused. One small change: update `/api/transcribe` to accept M4A in addition to WebM. |
 | Design | Liquid Glass — dark background, frosted glass cards, ambient glow blobs |
 | Project home | Separate GitHub repo |
 
@@ -33,33 +33,36 @@ A native iOS app that mirrors the Speech & Debate web app's five practice modes.
 ## Visual Design System
 
 **Style:** Liquid Glass (iOS 26-inspired)
-- Background: `#0d1117` with `linear-gradient(160deg, #0d1117, #0f1623, #0d1117)`
-- Cards: `rgba(255,255,255,0.07)` background, `rgba(255,255,255,0.12)` border, `borderRadius: 18`, `backdropFilter: blur(10px)`
-- Ambient blobs: `radial-gradient` circles with `filter: blur`, positioned absolutely
-- Mode accent colors (matching web app):
-  - SPAR: `#6366f1` (indigo)
+
+- **Background:** `expo-linear-gradient` from `#0d1117` → `#0f1623` → `#0d1117`
+- **Glass cards:** `expo-blur` (`BlurView`, `intensity={20}`, `tint="dark"`) with `backgroundColor: rgba(255,255,255,0.07)` overlay and `borderColor: rgba(255,255,255,0.12)`, `borderRadius: 18`
+- **Ambient blobs:** Absolute-positioned `View`s with `expo-linear-gradient` radial-ish gradients and large border radius, opacity 0.3–0.5
+- **Mode accent colors** (matching web app exactly):
+  - SPAR: `#3b82f6` (blue)
   - Free Talk: `#059669` (emerald)
-  - Impromptu: `#d97706` (amber)
+  - Impromptu: `#7c3aed` (violet)
   - Tongue Twisters: `#ec4899` (pink)
-  - Debate Practice: `#f59e0b` (yellow)
-- Typography: Inter (system font on iOS), weights 400/500/600/700
-- Icon style: Lucide React Native (consistent stroke, no emojis as icons)
-- Touch feedback: scale 0.96 on press via Reanimated, 150ms ease-out
-- Minimum touch target: 44×44pt on all interactive elements
+  - Debate Practice: `#d97706` (amber)
+- **Typography:** SF Pro (iOS system font via `fontFamily: undefined`), weights 400/500/600/700
+- **Icons:** `lucide-react-native` — consistent 2px stroke, no emoji as structural icons
+- **Touch feedback:** `react-native-reanimated` scale 0.96 on press, 150ms `Easing.out(Easing.ease)`
+- **Haptics:** `expo-haptics` `ImpactFeedbackStyle.Light` on every primary button tap
+- **Minimum touch target:** 44×44pt on all interactive elements (use `hitSlop` if needed)
+- **Safe areas:** `react-native-safe-area-context` — all screens respect top/bottom safe areas
 
 ---
 
 ## Navigation Structure
 
-Tab bar with 3 tabs (bottom, iOS native `TabBar` style via Expo Router):
+Tab bar with 3 tabs (Expo Router `(tabs)` layout — renders as native iOS `UITabBar`):
 
 | Tab | Icon | Content |
 |-----|------|---------|
-| Home | House | All 5 mode cards, streak, tip of the day |
-| History | Clock | Past sessions stored in AsyncStorage |
-| Profile | Person | Google account info, sign out, settings |
+| Home | `House` | All 5 mode cards, streak, tip of the day |
+| History | `Clock` | Past sessions stored in AsyncStorage |
+| Profile | `User` | Google account info, sign out |
 
-Each practice mode pushes a stack of screens on top of the Home tab.
+Each practice mode is a stack pushed on top of the Home tab (using Expo Router's nested stack inside the tab).
 
 ---
 
@@ -68,90 +71,143 @@ Each practice mode pushes a stack of screens on top of the Home tab.
 ```
 app/
   (tabs)/
-    index.tsx          # Home — 5 mode cards
-    history.tsx        # Past sessions list
-    profile.tsx        # User profile + sign out
+    _layout.tsx          # Tab bar definition (3 tabs)
+    index.tsx            # Home — 5 mode cards, streak, tip
+    history.tsx          # Past sessions list
+    profile.tsx          # Google account, sign out
   spar/
-    setup.tsx          # Difficulty, opponent, AI strength
-    index.tsx          # Topic picker
-    session.tsx        # Live debate rounds
-    feedback.tsx       # Scores + analysis
+    _layout.tsx          # Stack header config
+    setup.tsx            # Difficulty, opponent, AI strength
+    index.tsx            # Topic picker + live debate (single stage-machine screen)
+    feedback.tsx         # Scores + analysis
   impromptu/
-    index.tsx          # Settings (difficulty, think time, speech length)
-    session.tsx        # Countdown + recording
-    feedback.tsx       # Scores + analysis
+    _layout.tsx
+    index.tsx            # Settings + topic generation + countdown + recording (stage machine)
+    feedback.tsx         # Scores + analysis
   casual/
-    index.tsx          # Topic + speech length picker
-    practice.tsx       # AI outline, AI speech, start recording
-    feedback.tsx       # Scores + analysis
+    _layout.tsx
+    index.tsx            # Topic picker + speech length
+    practice.tsx         # AI outline, AI speech (expo-speech), start recording (stage machine)
+    feedback.tsx         # Scores + analysis
   tongue-twisters/
-    index.tsx          # Difficulty + twister picker
-    record.tsx         # Ready screen + recording
-    feedback.tsx       # Accuracy + fluency scores
+    _layout.tsx
+    index.tsx            # Difficulty + twister picker + recording (stage machine)
+    feedback.tsx         # Accuracy + fluency scores
   debate/
-    setup.tsx          # Difficulty, mode, rounds
-    index.tsx          # Topic picker
-    session.tsx        # Argument rounds
-    feedback.tsx       # Round-by-round feedback
-  _layout.tsx          # Root layout — AuthProvider, SessionProvider
+    _layout.tsx
+    setup.tsx            # Difficulty, mode, rounds
+    index.tsx            # Topic picker + argument rounds (stage machine)
+    feedback.tsx         # Round-by-round feedback
+  _layout.tsx            # Root layout — AuthProvider, SafeAreaProvider, gesture handler
 
 components/
-  AudioRecorder.tsx    # expo-av recording with waveform UI
-  AudioPlayer.tsx      # expo-av playback
-  GlassCard.tsx        # Reusable frosted glass card
-  ModeCard.tsx         # Home screen mode list item
-  FeedbackReport.tsx   # Shared feedback display
-  CountdownTimer.tsx   # Think-time countdown
+  AudioRecorder.tsx      # expo-av recording UI (waveform bars, timer, stop button)
+  AudioPlayer.tsx        # expo-av playback (play/pause, progress bar)
+  GlassCard.tsx          # Reusable BlurView glass card wrapper
+  ModeCard.tsx           # Home screen mode list item (accent color, icon, label)
+  FeedbackReport.tsx     # Shared feedback display (score, summary, tip, highlights)
+  CountdownTimer.tsx     # Think-time countdown (Reanimated animated ring)
 
 lib/
-  api.ts               # fetch wrapper — base URL from env, attaches auth token
-  auth.ts              # Google Sign-In helpers, token storage in SecureStore
-  storage.ts           # AsyncStorage helpers (replaces sessionStorage)
-  topics.ts            # casualTopics, sparTopics, tongueTwisters (copied from web)
+  api.ts                 # fetch wrapper — EXPO_PUBLIC_API_BASE_URL from env
+  auth.ts                # Google Sign-In helpers, token read/write from SecureStore
+  storage.ts             # AsyncStorage helpers (replaces sessionStorage pattern)
+  casualTopics.ts        # Copied from web lib/casualTopics.ts
+  sparTopics.ts          # Copied from web lib/sparTopics.ts
+  tongueTwisters.ts      # Copied from web lib/tongueTwisters.ts
+  topicBank.ts           # Copied from web lib/topicBank.ts (used by Impromptu)
 ```
+
+**Note on stage machines:** Each mode's main screen uses a local `stage` state (e.g. `"setup" | "recording" | "processing" | "feedback"`) — the same pattern as the web app — rather than splitting into multiple route files. This avoids passing large state objects through navigation params.
 
 ---
 
 ## Authentication Flow
 
-1. App launches → check `SecureStore` for existing Google ID token
-2. If token exists and not expired → user is signed in
-3. If not → show sign-in screen (Profile tab prompts sign-in)
-4. Sign-in: `expo-auth-session` opens Google OAuth in a browser session → returns `id_token`
-5. Token stored in `expo-secure-store`
-6. All API calls include `Authorization: Bearer <id_token>` header
-7. Next.js APIs verify the token using Google's public keys (minimal change: add a `verifyMobileToken` helper)
+The existing Next.js API routes do **not** enforce authentication — they only rate-limit. Auth on mobile is therefore frontend-only: used for personalisation (user name/avatar in Profile tab, session history attribution).
 
-Auth is required for all practice modes (shown as a gate on the mode card tap if not signed in).
+1. App launches → check `SecureStore` for `user` JSON (name, email, avatar, Google ID token)
+2. If found → user is considered signed in; show avatar in Home header
+3. If not → Home still works; Profile tab shows "Sign in with Google"
+4. Sign-in: `expo-auth-session` + `expo-crypto` opens Google OAuth via `useAuthRequest`. Returns `id_token` and `userInfo`
+5. Store `id_token` + parsed user info in `expo-secure-store`
+6. Sign-out: clear `SecureStore`, clear `AsyncStorage` history, navigate to Home
+
+**Auth gate:** Unlike the web app, all 5 practice modes are accessible without sign-in on mobile (no recording gate). Sign-in is encouraged via Profile tab only. This avoids friction on mobile where OAuth redirects are more disruptive.
 
 ---
 
 ## Audio & Transcription Flow
 
-1. `expo-av` starts recording to a temp URI on device
-2. On stop → upload file as `multipart/form-data` to `/api/transcribe`
-3. API returns transcript text
-4. Transcript + metadata sent to mode-specific feedback API (e.g. `/api/casual-feedback`)
-5. Feedback JSON rendered in feedback screen
+`expo-av` records audio natively on iOS in **M4A (AAC)** format to a temp URI.
+
+**Required backend change:** Update `/api/transcribe` to accept M4A — FFmpeg already supports it, only the input format assumption (`raw.webm`) needs to change to use the file's actual extension. The route receives the file via `multipart/form-data` unchanged.
+
+**Flow:**
+1. `expo-av` `Audio.Recording` starts with `Audio.RecordingOptionsPresets.HIGH_QUALITY` (M4A, 44.1kHz)
+2. On stop → `recording.getURI()` returns local file path
+3. Upload as `multipart/form-data` to `${API_BASE}/api/transcribe` with filename `audio.m4a`
+4. API converts M4A → MP3 via FFmpeg, transcribes, returns `{ transcript, audioUrl }`
+5. `audioUrl` is returned as relative path — mobile uses `${API_BASE}${audioUrl}` to construct full URL for `expo-av` playback
+6. Transcript + metadata POSTed to mode-specific feedback endpoint
+
+**No WebSocket / Deepgram streaming on mobile** — batch upload is simpler and sufficient. The `server.mjs` Deepgram proxy is web-only.
 
 ---
 
 ## History Tab
 
-Session results saved locally to `AsyncStorage` after each feedback screen is shown:
+Session results written to `AsyncStorage` key `"sda:history"` (JSON array) at the moment the feedback screen mounts successfully:
 
 ```ts
 interface SessionRecord {
-  id: string;
+  id: string;           // uuid
   mode: 'spar' | 'impromptu' | 'casual' | 'tongue-twisters' | 'debate';
   topic: string;
-  score: number;
-  date: string; // ISO
-  duration: number; // seconds
+  score: number;        // primary score (0–10); extracted per-mode (see below)
+  date: string;         // ISO 8601
+  duration: number;     // seconds (from recording)
 }
 ```
 
-No new backend endpoint needed. History is per-device only (no cross-device sync in v1).
+**Score extraction per mode:**
+- SPAR: `feedback.overall` (from `/api/spar-feedback`)
+- Impromptu: `feedback.score` (from `/api/feedback`)
+- Free Talk: `feedback.score` (from `/api/casual-feedback`)
+- Tongue Twisters: `(feedback.accuracy + feedback.fluency) / 2` (from `/api/tongue-twister-feedback`)
+- Debate: `feedback.overall` (from `/api/debate-argument-feedback`)
+
+**Streak tracking:** Separate `AsyncStorage` keys mirroring the web app:
+- `sda:sessions` — total count
+- `sda:streak` — current streak
+- `sda:lastDate` — last practice date (YYYY-MM-DD)
+
+History is per-device only (no cross-device sync in v1).
+
+---
+
+## Required Backend Changes (web app repo)
+
+Only one change needed:
+
+**`/api/transcribe`:** Accept any audio format, not just WebM. Change the temp file name from hardcoded `raw.webm` to use the uploaded file's extension (or detect via `Content-Type`). FFmpeg handles M4A natively.
+
+---
+
+## Third-Party Libraries
+
+Beyond Expo SDK:
+- `expo-linear-gradient` — background gradients
+- `expo-blur` — glass card effect
+- `expo-haptics` — touch feedback
+- `expo-secure-store` — token storage
+- `expo-auth-session` + `expo-crypto` — Google OAuth
+- `expo-speech` — TTS (rate: 0.85 for twisters, 0.92 for Casual example)
+- `react-native-reanimated` — press animations, countdown ring
+- `react-native-gesture-handler` — swipe-back, gesture support
+- `react-native-safe-area-context` — safe area insets
+- `lucide-react-native` — icons
+- `@react-native-async-storage/async-storage` — local storage
 
 ---
 
@@ -168,7 +224,8 @@ No new backend endpoint needed. History is per-device only (no cross-device sync
 ## Success Criteria
 
 - All 5 practice modes work end-to-end on a real iPhone
-- Google Sign-In flow completes successfully
-- Audio recording → transcription → AI feedback round-trip works
-- App feels native: smooth scroll, proper safe areas, haptic feedback on key actions
-- Liquid Glass design is consistent across all screens
+- Google Sign-In flow completes successfully (optional, not blocking)
+- Audio recording (M4A) → transcription → AI feedback round-trip works
+- History tab persists sessions across app restarts
+- App feels native: smooth 60fps scroll, safe areas respected, haptic feedback on key actions
+- Liquid Glass design consistent across all screens with correct mode accent colors
