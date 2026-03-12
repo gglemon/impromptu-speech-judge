@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import AudioRecorder from "@/components/AudioRecorder";
 import CountdownTimer from "@/components/CountdownTimer";
 import SparFeedbackReport from "@/components/SparFeedbackReport";
@@ -532,6 +532,7 @@ export default function SparPage() {
   // ── Setup / prep ──────────────────────────────────────────────────────────
 
   const handleStart = async () => {
+    if (!session?.user) { signIn("google"); return; }
     abortRef.current?.abort();
     abortRef.current = new AbortController();
     const signal = abortRef.current.signal;
