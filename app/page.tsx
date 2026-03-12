@@ -40,6 +40,14 @@ function IconSpeaker({ className }: { className?: string }) {
   );
 }
 
+function IconDocument({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
+    </svg>
+  );
+}
+
 function IconArrow({ className }: { className?: string }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className={className}>
@@ -49,7 +57,7 @@ function IconArrow({ className }: { className?: string }) {
 }
 
 const features: {
-  href: string;
+  href: string | null;
   title: string;
   description: string;
   Icon: ({ className }: { className?: string }) => JSX.Element;
@@ -58,6 +66,7 @@ const features: {
   arrowHoverColor: string;
   cardHover: string;
   wide?: boolean;
+  comingSoon?: boolean;
 }[] = [
   {
     href: "/spar/setup",
@@ -108,6 +117,17 @@ const features: {
     iconColor: "text-pink-400",
     arrowHoverColor: "group-hover:text-pink-400",
     cardHover: "hover:border-pink-500/25",
+  },
+  {
+    href: null,
+    title: "Congressional Debate",
+    description: "Draft and deliver legislation speeches, then receive AI scoring on argumentation and impact",
+    Icon: IconDocument,
+    iconBg: "bg-slate-500/15",
+    iconColor: "text-slate-500",
+    arrowHoverColor: "",
+    cardHover: "",
+    comingSoon: true,
     wide: true,
   },
 ];
@@ -132,24 +152,50 @@ export default function Home() {
 
         {/* Feature cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {features.map(({ href, title, description, Icon, iconBg, iconColor, arrowHoverColor, cardHover, wide }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`group flex flex-col gap-5 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 hover:bg-white/[0.06] ${cardHover} transition-all duration-200 cursor-pointer hover:-translate-y-0.5${wide ? " sm:col-span-2" : ""}`}
-            >
-              <div className="flex items-start justify-between">
-                <div className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
-                  <Icon className={`w-5 h-5 ${iconColor}`} />
+          {features.map(({ href, title, description, Icon, iconBg, iconColor, arrowHoverColor, cardHover, wide, comingSoon }) => {
+            const cardClass = `flex flex-col gap-5 rounded-2xl border p-6 transition-all duration-200${wide ? " sm:col-span-2" : ""}`;
+            const inner = (
+              <>
+                <div className="flex items-start justify-between">
+                  <div className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
+                    <Icon className={`w-5 h-5 ${iconColor}`} />
+                  </div>
+                  {comingSoon ? (
+                    <span className="px-2.5 py-1 rounded-full bg-slate-500/15 border border-slate-500/25 text-slate-500 text-xs font-medium">
+                      Coming Soon
+                    </span>
+                  ) : (
+                    <IconArrow className={`w-4 h-4 text-slate-600 ${arrowHoverColor} group-hover:translate-x-0.5 transition-all duration-200`} />
+                  )}
                 </div>
-                <IconArrow className={`w-4 h-4 text-slate-600 ${arrowHoverColor} group-hover:translate-x-0.5 transition-all duration-200`} />
-              </div>
-              <div>
-                <h2 className="text-base font-semibold text-white mb-1">{title}</h2>
-                <p className="text-sm text-slate-400 leading-relaxed">{description}</p>
-              </div>
-            </Link>
-          ))}
+                <div>
+                  <h2 className={`text-base font-semibold mb-1 ${comingSoon ? "text-slate-500" : "text-white"}`}>{title}</h2>
+                  <p className="text-sm text-slate-500 leading-relaxed">{description}</p>
+                </div>
+              </>
+            );
+
+            if (comingSoon) {
+              return (
+                <div
+                  key={title}
+                  className={`${cardClass} border-white/[0.05] bg-white/[0.01] opacity-60 cursor-not-allowed`}
+                >
+                  {inner}
+                </div>
+              );
+            }
+
+            return (
+              <Link
+                key={href}
+                href={href!}
+                className={`group ${cardClass} border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] ${cardHover} cursor-pointer hover:-translate-y-0.5`}
+              >
+                {inner}
+              </Link>
+            );
+          })}
         </div>
       </div>
     </main>
