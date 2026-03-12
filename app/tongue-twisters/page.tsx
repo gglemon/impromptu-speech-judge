@@ -8,13 +8,14 @@ import { getRandomTwister } from "@/lib/tongueTwisters";
 type Difficulty = "easy" | "medium" | "hard";
 type Stage = "setup" | "ready" | "processing" | "feedback";
 
-// Per-difficulty twister cache — twister is decided once per session per difficulty.
-const twisterCache: Partial<Record<Difficulty, string>> = {};
-function getCachedTwister(diff: Difficulty): string {
-  if (!twisterCache[diff]) twisterCache[diff] = getRandomTwister(diff).text;
-  return twisterCache[diff]!;
+// Twisters stored in sessionStorage so they survive HMR reloads.
+function getStableTwister(diff: Difficulty): string {
+  return getRandomTwister(diff).text;
 }
-const initialTwister = getCachedTwister("easy");
+
+function pickFreshTwister(diff: Difficulty): string {
+  return getRandomTwister(diff).text;
+}
 
 interface TwisterFeedback {
   accuracy: number;
@@ -38,7 +39,7 @@ function ScoreRing({ value, label, color }: { value: number; label: string; colo
 
 export default function TongueTwistersPage() {
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
-  const [twister, setTwister] = useState(initialTwister);
+  const [twister, setTwister] = useState<string>("");
   const [repetitions, setRepetitions] = useState(3);
   const [stage, setStage] = useState<Stage>("setup");
   const [transcript, setTranscript] = useState("");
@@ -46,15 +47,20 @@ export default function TongueTwistersPage() {
   const [error, setError] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
 
+  // Load twister from sessionStorage on mount (client-only)
+  useEffect(() => {
+    setTwister(getStableTwister("easy"));
+  }, []);
+
   function pickNewTwister(diff: Difficulty) {
-    setTwister(getCachedTwister(diff));
+    setTwister(pickFreshTwister(diff));
   }
 
   const prevDifficultyRef = useRef<Difficulty>("easy");
   useEffect(() => {
     if (difficulty === prevDifficultyRef.current) return;
     prevDifficultyRef.current = difficulty;
-    pickNewTwister(difficulty);
+    setTwister(getStableTwister(difficulty));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [difficulty]);
 
@@ -113,14 +119,28 @@ export default function TongueTwistersPage() {
   const overallScore = feedback ? (feedback.accuracy + feedback.fluency) / 2 : 0;
   const overallColor = overallScore >= 8 ? "text-green-400" : overallScore >= 6 ? "text-yellow-400" : "text-red-400";
 
+  if (stage === "setup" && !twister) {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-pink-500 border-t-transparent rounded-full animate-spin" />
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-8">
       <div className="w-full max-w-lg space-y-8">
         <div className="flex items-center justify-between">
-          <Link href="/" className="text-sm text-gray-400 hover:text-white transition-colors">
-            ← Home
+          <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+            </svg>
+            Home
           </Link>
-          <span className="text-sm text-pink-400 font-medium">👅 Tongue Twisters</span>
+          <span className="inline-flex items-center gap-1.5 text-sm text-pink-400 font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-pink-400" />
+            Tongue Twisters
+          </span>
         </div>
 
         {/* Setup */}
@@ -134,12 +154,14 @@ export default function TongueTwistersPage() {
                   <button
                     key={d}
                     onClick={() => setDifficulty(d)}
-                    className={`py-2.5 rounded-xl text-sm font-semibold capitalize border transition-colors ${
+                    className={`py-2.5 rounded-xl text-sm font-semibold capitalize border transition-all duration-200 cursor-pointer ${
                       difficulty === d
-                        ? d === "easy" ? "bg-green-900 border-green-600 text-green-300"
-                          : d === "medium" ? "bg-yellow-900 border-yellow-600 text-yellow-300"
-                          : "bg-red-900 border-red-600 text-red-300"
-                        : "bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500"
+                        ? d === "easy"
+                          ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400"
+                          : d === "medium"
+                          ? "bg-amber-500/15 border-amber-500/40 text-amber-400"
+                          : "bg-red-500/15 border-red-500/40 text-red-400"
+                        : "bg-white/[0.03] border-white/[0.08] text-slate-400 hover:border-white/20 hover:text-slate-200"
                     }`}
                   >
                     {d}
@@ -154,7 +176,7 @@ export default function TongueTwistersPage() {
             </div>
 
             {/* Twister card */}
-            <div className="rounded-2xl bg-pink-950 border border-pink-700 p-6 space-y-4 text-center">
+            <div className="rounded-2xl bg-pink-500/10 border border-pink-500/25 p-6 space-y-4 text-center">
               <p className="text-pink-300 text-sm font-medium uppercase tracking-wide">Your Tongue Twister</p>
               <p className="text-2xl font-bold text-white leading-snug">{twister}</p>
               <button
@@ -169,14 +191,14 @@ export default function TongueTwistersPage() {
             <div className="space-y-3">
               <p className="text-sm font-medium text-gray-300 text-center">Say it how many times?</p>
               <div className="flex gap-2 justify-center">
-                {[1, 3, 5].map(n => (
+                  {[1, 3, 5].map(n => (
                   <button
                     key={n}
                     onClick={() => setRepetitions(n)}
-                    className={`px-5 py-2.5 rounded-xl text-sm font-semibold border transition-colors ${
+                    className={`px-5 py-2.5 rounded-xl text-sm font-semibold border transition-all duration-200 cursor-pointer ${
                       repetitions === n
-                        ? "bg-pink-700 border-pink-500 text-white"
-                        : "bg-gray-800 border-gray-700 text-gray-400 hover:text-white"
+                        ? "bg-pink-500/15 border-pink-500/40 text-pink-400"
+                        : "bg-white/[0.03] border-white/[0.08] text-slate-400 hover:border-white/20 hover:text-slate-200"
                     }`}
                   >
                     {n}×
@@ -187,7 +209,7 @@ export default function TongueTwistersPage() {
 
             <button
               onClick={() => setStage("ready")}
-              className="w-full py-4 bg-pink-600 hover:bg-pink-500 text-white font-bold text-lg rounded-xl transition-colors"
+              className="w-full py-4 bg-pink-600 hover:bg-pink-500 active:scale-[0.99] text-white font-bold text-lg rounded-xl transition-all duration-200 cursor-pointer shadow-lg shadow-pink-500/20"
             >
               Ready to Practice! 👅
             </button>
@@ -197,7 +219,7 @@ export default function TongueTwistersPage() {
         {/* Ready */}
         {stage === "ready" && (
           <div className="space-y-6">
-            <div className="rounded-2xl bg-pink-950 border border-pink-700 p-6 text-center space-y-3">
+            <div className="rounded-2xl bg-pink-500/10 border border-pink-500/25 p-6 text-center space-y-3">
               <p className="text-pink-300 text-sm font-medium uppercase tracking-wide">
                 Say this {repetitions}× in a row
               </p>

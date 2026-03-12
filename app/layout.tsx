@@ -13,7 +13,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-gray-950 text-white antialiased">
+      <body
+        className="min-h-screen text-white antialiased"
+        style={{
+          background: "#09090f",
+          backgroundImage:
+            "radial-gradient(ellipse 100% 60% at 50% 0%, rgba(99,102,241,0.08) 0%, transparent 70%)",
+          backgroundAttachment: "fixed",
+        }}
+      >
         {children}
       </body>
     </html>

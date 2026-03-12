@@ -5,9 +5,9 @@ type Difficulty = "easy" | "medium" | "hard";
 interface DifficultySelectorProps {
   difficulty: Difficulty;
   onChange: (d: Difficulty) => void;
-  thinkTime: number; // in seconds
+  thinkTime: number;
   onThinkTimeChange: (t: number) => void;
-  speechLength: number; // in seconds
+  speechLength: number;
   onSpeechLengthChange: (t: number) => void;
 }
 
@@ -40,7 +40,7 @@ export default function DifficultySelector({
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-gray-400 mb-4">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4">
           Topic Difficulty
         </h2>
         <div className="grid grid-cols-3 gap-3">
@@ -48,10 +48,10 @@ export default function DifficultySelector({
             <button
               key={d.value}
               onClick={() => onChange(d.value)}
-              className={`p-4 rounded-xl border-2 text-left transition-all ${
+              className={`p-4 rounded-xl border-2 text-left transition-all duration-200 cursor-pointer ${
                 difficulty === d.value
-                  ? "border-indigo-500 bg-indigo-500/10 text-white"
-                  : "border-gray-700 bg-gray-800/50 text-gray-400 hover:border-gray-500 hover:text-gray-200"
+                  ? "border-violet-500/50 bg-violet-500/10 text-white"
+                  : "border-white/[0.08] bg-white/[0.03] text-slate-400 hover:border-white/20 hover:text-slate-200"
               }`}
             >
               <div className="font-semibold text-base">{d.label}</div>
@@ -62,7 +62,7 @@ export default function DifficultySelector({
       </div>
 
       <div>
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-gray-400 mb-4">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4">
           Prep Time
         </h2>
         <div className="flex flex-wrap gap-2">
@@ -70,10 +70,10 @@ export default function DifficultySelector({
             <button
               key={opt.value}
               onClick={() => onThinkTimeChange(opt.value)}
-              className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200 cursor-pointer ${
                 thinkTime === opt.value
-                  ? "border-indigo-500 bg-indigo-500/10 text-white"
-                  : "border-gray-700 bg-gray-800/50 text-gray-400 hover:border-gray-500 hover:text-gray-200"
+                  ? "border-violet-500/50 bg-violet-500/10 text-white"
+                  : "border-white/[0.08] bg-white/[0.03] text-slate-400 hover:border-white/20 hover:text-slate-200"
               }`}
             >
               {opt.label}
@@ -83,9 +83,9 @@ export default function DifficultySelector({
       </div>
 
       <div>
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-gray-400 mb-4">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4">
           Speech Length:{" "}
-          <span className="text-white">
+          <span className="text-white normal-case tracking-normal">
             {speechLengthMinutes} min{speechLengthMinutes !== 1 ? "s" : ""}
           </span>
         </h2>
@@ -96,9 +96,9 @@ export default function DifficultySelector({
           step={1}
           value={speechLengthMinutes}
           onChange={(e) => onSpeechLengthChange(Number(e.target.value) * 60)}
-          className="w-full accent-indigo-500 cursor-pointer"
+          className="w-full accent-violet-500 cursor-pointer"
         />
-        <div className="flex justify-between text-xs text-gray-500 mt-2">
+        <div className="flex justify-between text-xs text-slate-600 mt-2">
           <span>1 min</span>
           <span>2 min</span>
           <span>3 min</span>

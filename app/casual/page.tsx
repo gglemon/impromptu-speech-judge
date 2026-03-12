@@ -93,7 +93,7 @@ export default function CasualPage() {
     }
   }
 
-  // Pick a random topic immediately on mount
+  // Pick a fresh random topic on every mount
   useEffect(() => {
     const t = casualTopics[Math.floor(Math.random() * casualTopics.length)];
     setTopic(t);
@@ -125,10 +125,16 @@ export default function CasualPage() {
     <main className="min-h-screen flex flex-col items-center justify-center p-8">
       <div className="w-full max-w-lg space-y-8">
         <div className="flex items-center justify-between">
-          <Link href="/" className="text-sm text-gray-400 hover:text-white transition-colors">
-            ← Home
+          <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+            </svg>
+            Home
           </Link>
-          <span className="text-sm text-emerald-400 font-medium">💬 Free Talk</span>
+          <span className="inline-flex items-center gap-1.5 text-sm text-emerald-400 font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            Free Talk
+          </span>
         </div>
 
         {/* Loading */}
@@ -142,7 +148,7 @@ export default function CasualPage() {
         {/* Topic */}
         {stage === "topic" && (
           <div className="space-y-8 text-center">
-            <div className="rounded-2xl bg-emerald-950 border border-emerald-700 p-8 space-y-4">
+            <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/25 p-8 space-y-4">
               <p className="text-emerald-300 text-sm font-medium uppercase tracking-wide">Your Topic</p>
               <textarea
                 value={topic}
@@ -165,10 +171,10 @@ export default function CasualPage() {
                   <button
                     key={opt.value}
                     onClick={() => setSpeechLength(opt.value)}
-                    className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${
+                    className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all duration-200 cursor-pointer ${
                       speechLength === opt.value
-                        ? "bg-emerald-600 border-emerald-500 text-white"
-                        : "bg-gray-900 border-gray-700 text-gray-400 hover:text-white"
+                        ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400"
+                        : "bg-white/[0.03] border-white/[0.08] text-slate-400 hover:border-white/20 hover:text-slate-200"
                     }`}
                   >
                     {opt.label}
@@ -217,13 +223,13 @@ export default function CasualPage() {
             <div className="flex flex-col gap-3">
               <button
                 onClick={handleShowExample}
-                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-lg rounded-xl transition-colors"
+              className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-bold text-lg rounded-xl transition-all duration-200 cursor-pointer shadow-lg shadow-emerald-500/20"
               >
                 See Example &amp; Start 🎤
               </button>
               <button
                 onClick={() => { stopSpeaking(); setRecordingStarted(false); setStage("recording"); }}
-                className="w-full py-3 border border-gray-600 bg-gray-900 hover:bg-gray-800 text-gray-300 font-semibold rounded-xl transition-colors text-sm"
+              className="w-full py-3 border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] text-slate-300 font-semibold rounded-xl transition-all duration-200 cursor-pointer text-sm"
               >
                 🎙 Start Recording Directly
               </button>
@@ -234,7 +240,7 @@ export default function CasualPage() {
         {/* Preview: AI example speech */}
         {stage === "preview" && (
           <div className="space-y-6">
-            <div className="rounded-2xl bg-emerald-950 border border-emerald-700 p-5 text-center">
+            <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/25 p-5 text-center">
               <p className="text-emerald-300 text-sm font-medium uppercase tracking-wide mb-1">Your Topic</p>
               <p className="text-xl font-semibold text-white">{topic}</p>
               <p className="text-emerald-400 text-xs mt-1">Target: {speechLength < 60 ? `${speechLength}s` : `${speechLength / 60} min`}</p>
@@ -270,7 +276,7 @@ export default function CasualPage() {
             <p className="text-gray-400 text-center text-sm">Read the example, then give your own speech!</p>
             <button
               onClick={() => { stopSpeaking(); setStage("recording"); }}
-              className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-lg rounded-xl transition-colors"
+              className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-bold text-lg rounded-xl transition-all duration-200 cursor-pointer shadow-lg shadow-emerald-500/20"
             >
               Start Speaking 🎤
             </button>
@@ -280,7 +286,7 @@ export default function CasualPage() {
         {/* Recording */}
         {stage === "recording" && (
           <div className="space-y-6">
-            <div className="rounded-2xl bg-emerald-950 border border-emerald-700 p-6 text-center">
+            <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/25 p-6 text-center">
               <p className="text-emerald-300 text-sm font-medium uppercase tracking-wide mb-2">Your Topic</p>
               <p className="text-xl font-semibold text-white">{topic}</p>
               <p className="text-emerald-400 text-xs mt-2">Target: {speechLength < 60 ? `${speechLength}s` : `${speechLength / 60} min`}</p>
@@ -291,7 +297,7 @@ export default function CasualPage() {
               <div className="flex flex-col items-center">
                 <button
                   onClick={() => setRecordingStarted(true)}
-                  className="px-10 py-4 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-colors text-lg"
+              className="px-10 py-4 bg-red-600 hover:bg-red-500 active:scale-[0.99] text-white font-bold rounded-xl transition-all duration-200 cursor-pointer text-lg shadow-lg shadow-red-500/20"
                 >
                   🎙 Start Recording
                 </button>
