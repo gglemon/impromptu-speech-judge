@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import DifficultySelector from "@/components/DifficultySelector";
 
 type Difficulty = "easy" | "medium" | "hard";
+
+const STORAGE_KEY = "impromptu:settings";
 
 export default function ImpromptuHome() {
   const router = useRouter();
@@ -15,11 +17,30 @@ export default function ImpromptuHome() {
   const [thinkTime, setThinkTime] = useState(120);
   const [speechLength, setSpeechLength] = useState(300);
 
+  // Restore settings after OAuth redirect
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const s = JSON.parse(saved);
+        if (s.difficulty) setDifficulty(s.difficulty);
+        if (s.thinkTime) setThinkTime(s.thinkTime);
+        if (s.speechLength) setSpeechLength(s.speechLength);
+      }
+    } catch {}
+  }, []);
+
+  function saveSettings() {
+    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ difficulty, thinkTime, speechLength })); } catch {}
+  }
+
   function handleStart() {
     if (!session?.user) {
+      saveSettings();
       signIn("google");
       return;
     }
+    sessionStorage.removeItem(STORAGE_KEY);
     router.push(`/session?difficulty=${difficulty}&thinkTime=${thinkTime}&speechLength=${speechLength}`);
   }
 
