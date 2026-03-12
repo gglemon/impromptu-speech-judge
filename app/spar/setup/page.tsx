@@ -28,6 +28,8 @@ export default function SparSetupPage() {
         opponent,
         aiDifficulty: opponent === "ai" ? aiStrength : "medium",
       }));
+      sessionStorage.removeItem("spar:topicOptions");
+      sessionStorage.removeItem("spar:selectedTopic");
     } catch {}
     router.push("/spar");
   }
