@@ -22,7 +22,15 @@ export default function HeaderAuth() {
           {user.name}
         </span>
         <button
-          onClick={() => signOut({ callbackUrl: "/" })}
+          onClick={() => {
+            try {
+              sessionStorage.removeItem("spar:settings");
+              sessionStorage.removeItem("spar:topicOptions");
+              sessionStorage.removeItem("spar:selectedTopic");
+              sessionStorage.removeItem("impromptu:settings");
+            } catch {}
+            signOut({ callbackUrl: "/" });
+          }}
           className="text-xs text-slate-500 hover:text-slate-300 transition-colors cursor-pointer px-2 py-1"
         >
           Sign out
