@@ -323,9 +323,14 @@ export default function SparPage() {
     setAiDifficulty(ai);
     aiDifficultyRef.current = ai;
 
-    const topics = getStableTopics(diff);
+    const savedTopics = (() => { try { const s = sessionStorage.getItem("spar:topicOptions"); return s ? JSON.parse(s) as string[] : null; } catch { return null; } })();
+    const savedSelected = (() => { try { return sessionStorage.getItem("spar:selectedTopic"); } catch { return null; } })();
+
+    const topics = savedTopics ?? getStableTopics(diff);
+    if (!savedTopics) { try { sessionStorage.setItem("spar:topicOptions", JSON.stringify(topics)); } catch {} }
     setTopicOptions(topics);
-    setSelectedTopic(topics[0]);
+    const initial = savedSelected && topics.includes(savedSelected) ? savedSelected : topics[0];
+    setSelectedTopic(initial);
   }, []);
 
   useEffect(() => { crossfireQRef.current = crossfireQuestions; }, [crossfireQuestions]);
@@ -533,6 +538,7 @@ export default function SparPage() {
 
   const handleStart = async () => {
     if (!session?.user) { signIn("google"); return; }
+    try { sessionStorage.removeItem("spar:topicOptions"); sessionStorage.removeItem("spar:selectedTopic"); } catch {}
     abortRef.current?.abort();
     abortRef.current = new AbortController();
     const signal = abortRef.current.signal;
@@ -759,7 +765,7 @@ export default function SparPage() {
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-gray-300">Pick a topic</p>
               <button
-                onClick={() => { setCustomTopicOpen(o => !o); setSelectedTopic(""); }}
+                onClick={() => { setCustomTopicOpen(o => !o); setSelectedTopic(""); try { sessionStorage.removeItem("spar:selectedTopic"); } catch {} }}
                 className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
               >
                 + Custom topic
@@ -768,7 +774,7 @@ export default function SparPage() {
             {topicOptions.map((topic, i) => (
               <button
                 key={i}
-                onClick={() => { setSelectedTopic(topic); setCustomTopicOpen(false); }}
+                onClick={() => { setSelectedTopic(topic); setCustomTopicOpen(false); try { sessionStorage.setItem("spar:selectedTopic", topic); } catch {} }}
                 className={`w-full text-left px-4 py-3 rounded-xl border text-base transition-colors ${
                   selectedTopic === topic
                     ? "border-blue-500 bg-blue-900/30 text-white"
@@ -783,7 +789,7 @@ export default function SparPage() {
                 type="text"
                 placeholder="Type your topic…"
                 autoFocus
-                onChange={e => setSelectedTopic(e.target.value)}
+                onChange={e => { setSelectedTopic(e.target.value); try { sessionStorage.setItem("spar:selectedTopic", e.target.value); } catch {}; }}
                 value={topicOptions.includes(selectedTopic) ? "" : selectedTopic}
                 className="w-full px-4 py-3 rounded-xl border border-blue-600 bg-blue-950/30 text-sm text-gray-200 placeholder-gray-500 focus:outline-none transition-colors"
               />

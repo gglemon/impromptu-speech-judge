@@ -9,13 +9,21 @@ import { getRandomTwister } from "@/lib/tongueTwisters";
 type Difficulty = "easy" | "medium" | "hard";
 type Stage = "setup" | "ready" | "processing" | "feedback";
 
-// Twisters stored in sessionStorage so they survive HMR reloads.
+// Twisters stored in sessionStorage so they survive OAuth redirects.
 function getStableTwister(diff: Difficulty): string {
-  return getRandomTwister(diff).text;
+  try {
+    const saved = sessionStorage.getItem(`tt:twister:${diff}`);
+    if (saved) return saved;
+  } catch {}
+  const t = getRandomTwister(diff).text;
+  try { sessionStorage.setItem(`tt:twister:${diff}`, t); } catch {}
+  return t;
 }
 
 function pickFreshTwister(diff: Difficulty): string {
-  return getRandomTwister(diff).text;
+  const t = getRandomTwister(diff).text;
+  try { sessionStorage.setItem(`tt:twister:${diff}`, t); } catch {}
+  return t;
 }
 
 interface TwisterFeedback {

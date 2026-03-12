@@ -95,9 +95,14 @@ export default function CasualPage() {
     }
   }
 
-  // Pick a fresh random topic on every mount
+  // Restore topic from sessionStorage (survives OAuth redirect), otherwise pick fresh
   useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem("casual:topic");
+      if (saved) { setTopic(saved); setStage("topic"); return; }
+    } catch {}
     const t = casualTopics[Math.floor(Math.random() * casualTopics.length)];
+    sessionStorage.setItem("casual:topic", t);
     setTopic(t);
     setStage("topic");
   }, []);
@@ -154,7 +159,7 @@ export default function CasualPage() {
               <p className="text-emerald-300 text-sm font-medium uppercase tracking-wide">Your Topic</p>
               <textarea
                 value={topic}
-                onChange={e => setTopic(e.target.value)}
+                onChange={e => { setTopic(e.target.value); try { sessionStorage.setItem("casual:topic", e.target.value); } catch {} }}
                 rows={2}
                 placeholder="Type a topic..."
                 className="text-3xl font-bold text-white leading-snug text-center w-full bg-transparent border-none resize-none focus:outline-none placeholder-emerald-900"
@@ -350,6 +355,7 @@ export default function CasualPage() {
             transcript={transcript}
             audioUrl={audioUrl}
             onRedo={() => {
+              try { sessionStorage.removeItem("casual:topic"); } catch {}
               setFeedback(null);
               setTranscript("");
               setAudioUrl("");
