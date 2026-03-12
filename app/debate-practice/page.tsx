@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import AudioRecorder from "@/components/AudioRecorder";
 import { getTopicsByDifficulty, type SparDifficulty } from "@/lib/sparTopics";
 
@@ -13,7 +13,13 @@ function pickTopic(diff: SparDifficulty): string {
 
 // Always pick a fresh topic on every visit.
 function getStableTopic(diff: SparDifficulty): string {
-  return pickTopic(diff);
+  try {
+    const saved = sessionStorage.getItem("debate:topic");
+    if (saved) return saved;
+  } catch {}
+  const t = pickTopic(diff);
+  try { sessionStorage.setItem("debate:topic", t); } catch {}
+  return t;
 }
 
 interface CriterionScores {
@@ -484,7 +490,7 @@ export default function DebatePracticePage() {
             <p className="text-xs text-purple-400 uppercase tracking-widest font-semibold">Resolution</p>
             <textarea
               value={topic}
-              onChange={e => setTopic(e.target.value)}
+              onChange={e => { setTopic(e.target.value); try { sessionStorage.setItem("debate:topic", e.target.value); } catch {}; }}
               rows={2}
               placeholder="Type your resolution..."
               className="text-2xl font-semibold text-white leading-snug text-center w-full bg-transparent border-none resize-none focus:outline-none placeholder-purple-900"
@@ -543,6 +549,12 @@ export default function DebatePracticePage() {
 
           <button
             onClick={() => {
+              if (!session?.user) {
+                try { sessionStorage.setItem("debate:topic", topic); } catch {}
+                signIn("google");
+                return;
+              }
+              try { sessionStorage.removeItem("debate:topic"); sessionStorage.removeItem("debate:settings"); } catch {}
               const resolved: "aff" | "neg" = preferredSide === "random" ? (Math.random() < 0.5 ? "aff" : "neg") : preferredSide;
               setUserSide(resolved);
               setSingleSideMode(preferredSide !== "random");
