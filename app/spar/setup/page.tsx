@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession, signIn } from "next-auth/react";
 import { type SparDifficulty } from "@/lib/sparTopics";
 
 type AiStrength = "easy" | "medium" | "hard";
@@ -17,11 +18,16 @@ function BackArrow() {
 
 export default function SparSetupPage() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [difficulty, setDifficulty] = useState<SparDifficulty>("medium");
   const [opponent, setOpponent] = useState<"ai" | "friend">("ai");
   const [aiStrength, setAiStrength] = useState<AiStrength>("medium");
 
   function handleStart() {
+    if (!session?.user) {
+      signIn("google");
+      return;
+    }
     try {
       sessionStorage.setItem("spar:settings", JSON.stringify({
         difficulty,

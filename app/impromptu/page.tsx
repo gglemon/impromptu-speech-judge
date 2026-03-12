@@ -2,14 +2,26 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSession, signIn } from "next-auth/react";
 import DifficultySelector from "@/components/DifficultySelector";
 
 type Difficulty = "easy" | "medium" | "hard";
 
 export default function ImpromptuHome() {
+  const router = useRouter();
+  const { data: session } = useSession();
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [thinkTime, setThinkTime] = useState(120);
   const [speechLength, setSpeechLength] = useState(300);
+
+  function handleStart() {
+    if (!session?.user) {
+      signIn("google");
+      return;
+    }
+    router.push(`/session?difficulty=${difficulty}&thinkTime=${thinkTime}&speechLength=${speechLength}`);
+  }
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-8">
@@ -47,12 +59,12 @@ export default function ImpromptuHome() {
           onSpeechLengthChange={setSpeechLength}
         />
 
-        <Link
-          href={`/session?difficulty=${difficulty}&thinkTime=${thinkTime}&speechLength=${speechLength}`}
+        <button
+          onClick={handleStart}
           className="block w-full py-4 bg-violet-600 hover:bg-violet-500 active:scale-[0.99] text-white font-bold text-center text-lg rounded-xl transition-all duration-200 cursor-pointer shadow-lg shadow-violet-500/20"
         >
-          Start Session →
-        </Link>
+          Start Speech →
+        </button>
       </div>
     </main>
   );
