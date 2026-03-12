@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import AudioRecorder from "@/components/AudioRecorder";
 import CountdownTimer from "@/components/CountdownTimer";
 import SparFeedbackReport from "@/components/SparFeedbackReport";
@@ -184,14 +185,10 @@ function pickTopicOptions(diff: SparDifficulty): string[] {
   return shuffled.slice(0, 3);
 }
 
-// Per-difficulty topic cache — topics are decided once per session and
-// stay the same when the user toggles difficulty back and forth.
-const topicCache: Partial<Record<SparDifficulty, string[]>> = {};
-function getCachedTopics(diff: SparDifficulty): string[] {
-  if (!topicCache[diff]) topicCache[diff] = pickTopicOptions(diff);
-  return topicCache[diff]!;
+// Always pick fresh topics on every visit.
+function getStableTopics(diff: SparDifficulty): string[] {
+  return pickTopicOptions(diff);
 }
-const initialTopics = getCachedTopics("medium");
 
 function TransitionCountdown({ onDone }: { onDone: () => void }) {
   const [count, setCount] = useState(10);
@@ -234,6 +231,8 @@ function TransitionCountdown({ onDone }: { onDone: () => void }) {
 }
 
 export default function SparPage() {
+  const { data: session } = useSession();
+  const userEmail = session?.user?.email ?? "";
   const [stage, setStage] = useState<Stage>("setup");
   const [difficulty, setDifficulty] = useState<SparDifficulty>("medium");
   const [userName, setUserName] = useState("");
@@ -250,8 +249,8 @@ export default function SparPage() {
   const [transitionData, setTransitionData] = useState<{ nextPhaseIdx: number; label: string } | null>(null);
   const userSideRef = useRef<"aff" | "neg">("aff");
 
-  const [topicOptions, setTopicOptions] = useState<string[]>(initialTopics);
-  const [selectedTopic, setSelectedTopic] = useState<string>(initialTopics[0]);
+  const [topicOptions, setTopicOptions] = useState<string[]>([]);
+  const [selectedTopic, setSelectedTopic] = useState<string>("");
   const [customTopicOpen, setCustomTopicOpen] = useState(false);
   const [aiData, setAiData] = useState<AiData | null>(null);
   const [aiGenerating, setAiGenerating] = useState(false);
@@ -302,6 +301,33 @@ export default function SparPage() {
   const difficultyRef = useRef<SparDifficulty>("medium");
   const abortRef = useRef<AbortController | null>(null);
 
+  // Read settings from sessionStorage and load topics — runs only on client after mount
+  useEffect(() => {
+    let diff: SparDifficulty = "medium";
+    let opp: "ai" | "friend" = "ai";
+    let ai: "easy" | "medium" | "hard" = "medium";
+    try {
+      const stored = sessionStorage.getItem("spar:settings");
+      if (stored) {
+        const s = JSON.parse(stored);
+        if (s.difficulty === "easy" || s.difficulty === "medium" || s.difficulty === "hard") diff = s.difficulty;
+        if (s.opponent === "ai" || s.opponent === "friend") opp = s.opponent;
+        if (s.aiDifficulty === "easy" || s.aiDifficulty === "medium" || s.aiDifficulty === "hard") ai = s.aiDifficulty;
+      }
+    } catch {}
+
+    setDifficulty(diff);
+    difficultyRef.current = diff;
+    setOpponentMode(opp);
+    opponentModeRef.current = opp;
+    setAiDifficulty(ai);
+    aiDifficultyRef.current = ai;
+
+    const topics = getStableTopics(diff);
+    setTopicOptions(topics);
+    setSelectedTopic(topics[0]);
+  }, []);
+
   useEffect(() => { crossfireQRef.current = crossfireQuestions; }, [crossfireQuestions]);
   useEffect(() => { aiDataRef.current = aiData; }, [aiData]);
   useEffect(() => { recordingsRef.current = recordings; }, [recordings]);
@@ -312,15 +338,6 @@ export default function SparPage() {
   useEffect(() => { aiDifficultyRef.current = aiDifficulty; }, [aiDifficulty]);
   useEffect(() => { userSideRef.current = userSide; }, [userSide]);
 
-  const prevDifficultyRef = useRef<SparDifficulty>("medium");
-  useEffect(() => {
-    if (difficulty === prevDifficultyRef.current) return;
-    prevDifficultyRef.current = difficulty;
-    const opts = getCachedTopics(difficulty);
-    setTopicOptions(opts);
-    setSelectedTopic(opts[0]);
-    setCustomTopicOpen(false);
-  }, [difficulty]);
 
   const { isSpeaking, speak, stop } = useTTS();
 
@@ -664,9 +681,8 @@ export default function SparPage() {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({
-              to: "gglemon@gmail.com",
-              subject: `SPAR Debate Summary — ${resolution.slice(0, 60)}`,
-              text: lines.join("\n"),
+              to: userEmail,
+              subject: `SPAR Debate Summary — ${resolution.slice(0, 60)}`,              text: lines.join("\n"),
             }),
           });
         };
@@ -694,30 +710,20 @@ export default function SparPage() {
   // ─── Render ───────────────────────────────────────────────────────────────
 
   if (stage === "setup") {
+    if (topicOptions.length === 0) {
+      return (
+        <main className="min-h-screen flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        </main>
+      );
+    }
     return (
       <main className="min-h-screen flex flex-col items-center justify-center p-8">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center space-y-2">
-            <Link href="/" className="text-gray-500 text-sm hover:text-gray-300 transition-colors">← Back</Link>
+            <Link href="/spar/setup" className="text-gray-500 text-sm hover:text-gray-300 transition-colors">← Back</Link>
             <h1 className="text-3xl font-bold text-white">SPAR Debate</h1>
-            <p className="text-gray-400">Pick a topic and debate against an AI opponent.</p>
-          </div>
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-gray-300 text-center">Opponent</p>
-            <div className="flex rounded-xl overflow-hidden border border-gray-700">
-              <button
-                onClick={() => setOpponentMode("ai")}
-                className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${opponentMode === "ai" ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-400 hover:text-white"}`}
-              >
-                🤖 vs AI
-              </button>
-              <button
-                onClick={() => setOpponentMode("friend")}
-                className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${opponentMode === "friend" ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-400 hover:text-white"}`}
-              >
-                👥 vs Friend
-              </button>
-            </div>
+            <p className="text-gray-400">Pick a topic and your side to begin.</p>
           </div>
           <div className="space-y-3">
             <p className="text-sm font-medium text-gray-300 text-center">Your Side</p>
@@ -746,26 +752,6 @@ export default function SparPage() {
               {preferredSide === "aff" ? "You argue FOR the resolution"
                 : preferredSide === "neg" ? "You argue AGAINST the resolution"
                 : "Side is randomly assigned at the start"}
-            </p>
-          </div>
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-gray-300 text-center">Difficulty</p>
-            <div className="grid grid-cols-3 gap-2">
-              {(["easy", "medium", "hard"] as SparDifficulty[]).map(d => (
-                <button key={d} onClick={() => setDifficulty(d)}
-                  className={`py-2.5 rounded-xl text-sm font-semibold capitalize border transition-colors ${difficulty === d
-                    ? d === "easy" ? "bg-green-900 border-green-600 text-green-300"
-                      : d === "medium" ? "bg-yellow-900 border-yellow-600 text-yellow-300"
-                      : "bg-red-900 border-red-600 text-red-300"
-                    : "bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500"}`}>
-                  {d}
-                </button>
-              ))}
-            </div>
-            <p className="text-xs text-gray-500 text-center">
-              {difficulty === "easy" ? "Simple, fun topics — great for 3rd & 4th graders"
-                : difficulty === "medium" ? "Reasoning & evidence — 5th & 6th grade level"
-                : "Nuanced policy & philosophy — 7th grade and above"}
             </p>
           </div>
           <div className="space-y-2">
@@ -801,26 +787,6 @@ export default function SparPage() {
                 className="w-full px-4 py-3 rounded-xl border border-blue-600 bg-blue-950/30 text-sm text-gray-200 placeholder-gray-500 focus:outline-none transition-colors"
               />
             )}
-          </div>
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-gray-300 text-center">AI Strength</p>
-            <div className="grid grid-cols-3 gap-2">
-              {(["easy", "medium", "hard"] as const).map(d => (
-                <button key={d} onClick={() => setAiDifficulty(d)}
-                  className={`py-2.5 rounded-xl text-sm font-semibold border transition-colors ${aiDifficulty === d
-                    ? d === "easy" ? "bg-green-900 border-green-600 text-green-300"
-                      : d === "medium" ? "bg-yellow-900 border-yellow-600 text-yellow-300"
-                      : "bg-red-900 border-red-600 text-red-300"
-                    : "bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500"}`}>
-                  {d === "easy" ? "🐣 Weak" : d === "medium" ? "💪 Normal" : "🔥 Strong"}
-                </button>
-              ))}
-            </div>
-            <p className="text-xs text-gray-500 text-center">
-              {aiDifficulty === "easy" ? "AI leaves logical gaps and exploitable flaws for you to catch"
-                : aiDifficulty === "medium" ? "AI makes solid, competent arguments"
-                : "AI makes the strongest possible case with tight logic"}
-            </p>
           </div>
 
           <div className="flex items-center justify-between px-1">

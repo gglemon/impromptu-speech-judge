@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import AudioRecorder from "@/components/AudioRecorder";
 import { getTopicsByDifficulty, type SparDifficulty } from "@/lib/sparTopics";
 
@@ -10,13 +11,10 @@ function pickTopic(diff: SparDifficulty): string {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-// Per-difficulty topic cache — topic is decided once per session per difficulty.
-const topicCache: Partial<Record<SparDifficulty, string>> = {};
-function getCachedTopic(diff: SparDifficulty): string {
-  if (!topicCache[diff]) topicCache[diff] = pickTopic(diff);
-  return topicCache[diff]!;
+// Always pick a fresh topic on every visit.
+function getStableTopic(diff: SparDifficulty): string {
+  return pickTopic(diff);
 }
-const initialTopic = getCachedTopic("medium");
 
 interface CriterionScores {
   relevance: number;
@@ -125,7 +123,9 @@ function advanceState(
 }
 
 export default function DebatePracticePage() {
-  const [topic, setTopic] = useState<string>(initialTopic);
+  const { data: session } = useSession();
+  const userEmail = session?.user?.email ?? "";
+  const [topic, setTopic] = useState<string>("");
   const [stage, setStage] = useState<Stage>("intro");
   const [turnIndex, setTurnIndex] = useState(0);
   const [difficulty, setDifficulty] = useState<SparDifficulty>("medium");
@@ -171,12 +171,6 @@ export default function DebatePracticePage() {
   const currentTurn = activeTurns[turnIndex] ?? TURNS[0];
   const isLastTurn = turnIndex === activeTurns.length - 1;
 
-  const prevDifficultyRef = useRef<SparDifficulty>("medium");
-  useEffect(() => {
-    if (difficulty === prevDifficultyRef.current) return;
-    prevDifficultyRef.current = difficulty;
-    setTopic(getCachedTopic(difficulty));
-  }, [difficulty]);
 
   function resetTurnInputs() {
     setCurrentTranscript("");
@@ -427,7 +421,7 @@ export default function DebatePracticePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          to: "gglemon@gmail.com",
+          to: userEmail,
           subject: `Debate Practice: "${topic}"`,
           text: body,
         }),
@@ -440,6 +434,27 @@ export default function DebatePracticePage() {
     }
   }
 
+  // Read settings from sessionStorage and load topic — runs only on client after mount
+  useEffect(() => {
+    let diff: SparDifficulty = "medium";
+    let m: "solo" | "friend" = "solo";
+    let r = 3;
+    try {
+      const stored = sessionStorage.getItem("debate:settings");
+      if (stored) {
+        const s = JSON.parse(stored);
+        if (s.difficulty === "easy" || s.difficulty === "medium" || s.difficulty === "hard") diff = s.difficulty;
+        if (s.mode === "solo" || s.mode === "friend") m = s.mode;
+        if (s.rounds === 2 || s.rounds === 3) r = s.rounds;
+      }
+    } catch {}
+
+    setDifficulty(diff);
+    setPracticeMode(m);
+    setNumRounds(r);
+    setTopic(getStableTopic(diff));
+  }, []);
+
   useEffect(() => {
     if (stage === "complete" && results.length > 0 && !emailSent) {
       sendSummaryEmail();
@@ -449,11 +464,18 @@ export default function DebatePracticePage() {
 
   // ── INTRO ────────────────────────────────────────────────────────────────
   if (stage === "intro") {
+    if (!topic) {
+      return (
+        <main className="min-h-screen flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+        </main>
+      );
+    }
     return (
       <main className="min-h-screen flex flex-col items-center justify-center p-8">
         <div className="w-full max-w-2xl space-y-8">
           <div className="text-center space-y-2">
-            <Link href="/" className="text-gray-500 hover:text-gray-300 text-sm">← Back</Link>
+            <Link href="/debate-practice/setup" className="text-gray-500 hover:text-gray-300 text-sm">← Back</Link>
             <h1 className="text-3xl font-bold mt-2">Debate Practice</h1>
             <p className="text-gray-400">Practice arguing both sides of a resolution</p>
           </div>
@@ -499,81 +521,25 @@ export default function DebatePracticePage() {
             </p>
           </div>
 
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-gray-300 text-center">Difficulty</p>
-            <div className="grid grid-cols-3 gap-2">
-              {(["easy", "medium", "hard"] as SparDifficulty[]).map(d => (
-                <button key={d} onClick={() => setDifficulty(d)}
-                  className={`py-2.5 rounded-xl text-sm font-semibold capitalize border transition-colors ${difficulty === d
-                    ? d === "easy" ? "bg-green-900 border-green-600 text-green-300"
-                      : d === "medium" ? "bg-yellow-900 border-yellow-600 text-yellow-300"
-                      : "bg-red-900 border-red-600 text-red-300"
-                    : "bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500"}`}>
-                  {d}
-                </button>
-              ))}
-            </div>
-            <p className="text-xs text-gray-500 text-center">
-              {difficulty === "easy" ? "3rd–4th grade · simple topics and language"
-                : difficulty === "medium" ? "5th–6th grade · reasoning and evidence"
-                : "7th grade+ · nuanced policy and philosophy"}
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-gray-300 text-center">Rounds per side</p>
-            <div className="flex rounded-xl overflow-hidden border border-gray-700">
-              {[2, 3].map(n => (
+          {practiceMode === "friend" && (
+            <div className="space-y-2">
+              <p className="text-xs text-gray-500 text-center">Which side will YOU argue?</p>
+              <div className="flex gap-2">
                 <button
-                  key={n}
-                  onClick={() => setNumRounds(n)}
-                  className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${numRounds === n ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-400 hover:text-white"}`}
+                  onClick={() => setUserSide("aff")}
+                  className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors ${userSide === "aff" ? "bg-purple-900 border-purple-600 text-purple-300" : "bg-gray-900 border-gray-700 text-gray-400 hover:text-white"}`}
                 >
-                  {n === 2 ? "Two arguments" : "Three arguments"}
+                  Affirmative (PRO)
                 </button>
-              ))}
-            </div>
-            <p className="text-xs text-gray-500 text-center">
-              {numRounds === 3 ? "" : ""}
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-gray-300 text-center">Practice Mode</p>
-            <div className="flex rounded-xl overflow-hidden border border-gray-700">
-              <button
-                onClick={() => setPracticeMode("solo")}
-                className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${practiceMode === "solo" ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-400 hover:text-white"}`}
-              >
-                🧑 Solo
-              </button>
-              <button
-                onClick={() => setPracticeMode("friend")}
-                className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${practiceMode === "friend" ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-400 hover:text-white"}`}
-              >
-                👥 With a Friend
-              </button>
-            </div>
-            {practiceMode === "friend" && (
-              <div className="space-y-2">
-                <p className="text-xs text-gray-500 text-center">Which side will YOU argue?</p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setUserSide("aff")}
-                    className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors ${userSide === "aff" ? "bg-purple-900 border-purple-600 text-purple-300" : "bg-gray-900 border-gray-700 text-gray-400 hover:text-white"}`}
-                  >
-                    Affirmative (PRO)
-                  </button>
-                  <button
-                    onClick={() => setUserSide("neg")}
-                    className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors ${userSide === "neg" ? "bg-orange-900 border-orange-600 text-orange-300" : "bg-gray-900 border-gray-700 text-gray-400 hover:text-white"}`}
-                  >
-                    Negative (CON)
-                  </button>
-                </div>
+                <button
+                  onClick={() => setUserSide("neg")}
+                  className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors ${userSide === "neg" ? "bg-orange-900 border-orange-600 text-orange-300" : "bg-gray-900 border-gray-700 text-gray-400 hover:text-white"}`}
+                >
+                  Negative (CON)
+                </button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           <button
             onClick={() => {
@@ -1066,7 +1032,7 @@ export default function DebatePracticePage() {
 
         {/* Email summary */}
         {emailSent ? (
-          <p className="text-green-400 text-sm text-center">Summary sent to gglemon@gmail.com ✓</p>
+          <p className="text-green-400 text-sm text-center">Summary sent to {userEmail} ✓</p>
         ) : emailError ? (
           <p className="text-red-400 text-xs text-center">{emailError}</p>
         ) : (

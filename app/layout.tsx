@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { auth, signIn, signOut } from "@/auth";
+import { SessionProvider } from "next-auth/react";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -105,7 +106,7 @@ export default function RootLayout({
         }}
       >
         <Header />
-        {children}
+        <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
   );
