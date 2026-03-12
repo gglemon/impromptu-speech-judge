@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import { type SparDifficulty } from "@/lib/sparTopics";
@@ -13,8 +13,24 @@ export default function DebatePracticeSetupPage() {
   const [mode, setMode] = useState<"solo" | "friend">("solo");
   const [rounds, setRounds] = useState(3);
 
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem("debate:settings");
+      if (saved) {
+        const s = JSON.parse(saved);
+        if (s.difficulty === "easy" || s.difficulty === "medium" || s.difficulty === "hard") setDifficulty(s.difficulty);
+        if (s.mode === "solo" || s.mode === "friend") setMode(s.mode);
+        if (s.rounds === 2 || s.rounds === 3) setRounds(s.rounds);
+      }
+    } catch {}
+  }, []);
+
   function handleStart() {
-    if (!session?.user) { signIn("google"); return; }
+    if (!session?.user) {
+      try { sessionStorage.setItem("debate:settings", JSON.stringify({ difficulty, mode, rounds })); } catch {}
+      signIn("google");
+      return;
+    }
     try {
       sessionStorage.setItem("debate:settings", JSON.stringify({ difficulty, mode, rounds }));
     } catch {}
