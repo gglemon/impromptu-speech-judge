@@ -36,7 +36,7 @@ A native iOS app that mirrors the Speech & Debate web app's five practice modes.
 
 - **Background:** `expo-linear-gradient` from `#0d1117` → `#0f1623` → `#0d1117`
 - **Glass cards:** `expo-blur` (`BlurView`, `intensity={20}`, `tint="dark"`) with `backgroundColor: rgba(255,255,255,0.07)` overlay and `borderColor: rgba(255,255,255,0.12)`, `borderRadius: 18`
-- **Ambient blobs:** Absolute-positioned `View`s with `expo-linear-gradient` radial-ish gradients and large border radius, opacity 0.3–0.5
+- **Ambient blobs:** Absolute-positioned circular `View`s with `expo-linear-gradient` (linear, center→transparent approximates a radial glow), large `borderRadius`, opacity 0.3–0.5. Note: `expo-linear-gradient` does not support true radial gradients; the visual approximation is sufficient for background blobs.
 - **Mode accent colors** (matching web app exactly):
   - SPAR: `#3b82f6` (blue)
   - Free Talk: `#059669` (emerald)
@@ -76,8 +76,8 @@ app/
     history.tsx          # Past sessions list
     profile.tsx          # Google account, sign out
   spar/
-    _layout.tsx          # Stack header config
-    setup.tsx            # Difficulty, opponent, AI strength
+    _layout.tsx          # Stack header config (title, back button)
+    setup.tsx            # Pick difficulty (Novice/JV/Varsity), opponent type, AI strength → navigates to index
     index.tsx            # Topic picker + live debate (single stage-machine screen)
     feedback.tsx         # Scores + analysis
   impromptu/
@@ -95,7 +95,7 @@ app/
     feedback.tsx         # Accuracy + fluency scores
   debate/
     _layout.tsx
-    setup.tsx            # Difficulty, mode, rounds
+    setup.tsx            # Pick difficulty (Novice/JV/Varsity), mode (structured/crossfire), number of arguments → navigates to index
     index.tsx            # Topic picker + argument rounds (stage machine)
     feedback.tsx         # Round-by-round feedback
   _layout.tsx            # Root layout — AuthProvider, SafeAreaProvider, gesture handler
@@ -133,6 +133,11 @@ The existing Next.js API routes do **not** enforce authentication — they only 
 5. Store `id_token` + parsed user info in `expo-secure-store`
 6. Sign-out: clear `SecureStore`, clear `AsyncStorage` history, navigate to Home
 
+**Google OAuth setup required:**
+- In Google Cloud Console: add `https://auth.expo.io/@<username>/<slug>` as an authorized redirect URI for development (Expo proxy), and the custom scheme `<slug>://` for production builds
+- In `app.json`: set `scheme` field (e.g. `"speech-debate"`) — required for production OAuth redirect
+- In `app.json`: add `bundleIdentifier` (e.g. `com.yourname.speechdebate`) — required for App Store build
+
 **Auth gate:** Unlike the web app, all 5 practice modes are accessible without sign-in on mobile (no recording gate). Sign-in is encouraged via Profile tab only. This avoids friction on mobile where OAuth redirects are more disruptive.
 
 ---
@@ -141,7 +146,7 @@ The existing Next.js API routes do **not** enforce authentication — they only 
 
 `expo-av` records audio natively on iOS in **M4A (AAC)** format to a temp URI.
 
-**Required backend change:** Update `/api/transcribe` to accept M4A — FFmpeg already supports it, only the input format assumption (`raw.webm`) needs to change to use the file's actual extension. The route receives the file via `multipart/form-data` unchanged.
+**Required backend change:** Update `/api/transcribe` to accept M4A. The route currently saves the upload to a hardcoded path `${id}-raw.webm` and cleans it up in the `finally` block by that same variable. Change: rename `rawWebmPath` → `rawAudioPath`, use the uploaded file's extension (from `Content-Type` or filename) for the temp file. FFmpeg auto-detects audio format from file content regardless of extension, so no FFmpeg flag changes are needed. The MP3 output path and `RECORDINGS_DIR` static serving are unchanged — the API already returns `{ transcript, audioUrl: "/recordings/${id}.mp3" }` and the file is served from `public/recordings/` by Next.js. Mobile constructs the full playback URL as `${API_BASE}${audioUrl}`.
 
 **Flow:**
 1. `expo-av` `Audio.Recording` starts with `Audio.RecordingOptionsPresets.HIGH_QUALITY` (M4A, 44.1kHz)
@@ -151,7 +156,7 @@ The existing Next.js API routes do **not** enforce authentication — they only 
 5. `audioUrl` is returned as relative path — mobile uses `${API_BASE}${audioUrl}` to construct full URL for `expo-av` playback
 6. Transcript + metadata POSTed to mode-specific feedback endpoint
 
-**No WebSocket / Deepgram streaming on mobile** — batch upload is simpler and sufficient. The `server.mjs` Deepgram proxy is web-only.
+**No WebSocket / Deepgram streaming on mobile** — React Native lacks a browser-compatible `MediaRecorder` API, making the web app's streaming architecture (`server.mjs` Deepgram proxy) non-portable. Batch upload (record → upload → transcribe) is simpler, sufficient for the use cases, and avoids a complex native streaming implementation. The live transcript experience from the web is not replicated in v1.
 
 ---
 
@@ -202,7 +207,7 @@ Beyond Expo SDK:
 - `expo-haptics` — touch feedback
 - `expo-secure-store` — token storage
 - `expo-auth-session` + `expo-crypto` — Google OAuth
-- `expo-speech` — TTS (rate: 0.85 for twisters, 0.92 for Casual example)
+- `expo-speech` — TTS for reading text aloud: reads tongue twisters aloud at `rate: 0.85` so the user can hear correct pronunciation before recording; reads AI-generated example speech in Casual mode at `rate: 0.92`. This is text-to-speech synthesis only — user recording playback uses `expo-av`.
 - `react-native-reanimated` — press animations, countdown ring
 - `react-native-gesture-handler` — swipe-back, gesture support
 - `react-native-safe-area-context` — safe area insets
