@@ -95,33 +95,39 @@ export async function POST(req: NextRequest) {
   if (!existsSync(tmpDir)) await mkdir(tmpDir, { recursive: true });
 
   const id = Date.now();
-  const rawWebmPath = join(tmpDir, `${id}-raw.webm`);
   const mp3Path = join(RECORDINGS_DIR, `${id}.mp3`);
   const wavPath = join(tmpDir, `${id}.wav`);
 
   cleanupOldRecordings();
+
+  let rawAudioPath = join(tmpDir, `${id}-raw.audio`);
 
   try {
     const formData = await req.formData();
     const audioBlob = formData.get("audio") as File;
     if (!audioBlob) return NextResponse.json({ error: "No audio provided" }, { status: 400 });
 
+    const ext = audioBlob.type.includes('mp4') || audioBlob.type.includes('m4a') ? 'm4a'
+      : audioBlob.type.includes('webm') ? 'webm'
+      : 'audio';
+    rawAudioPath = join(tmpDir, `${id}-raw.${ext}`);
+
     const buffer = Buffer.from(await audioBlob.arrayBuffer());
-    await writeFile(rawWebmPath, buffer);
+    await writeFile(rawAudioPath, buffer);
 
     let transcript: string;
 
     if (STT_PROVIDER === "groq") {
       // Convert WebM → MP3 (for playback + Groq)
       await run(FFMPEG_BIN, [
-        "-y", "-fflags", "+genpts", "-i", rawWebmPath,
+        "-y", "-fflags", "+genpts", "-i", rawAudioPath,
         "-q:a", "4", mp3Path,
       ]);
       transcript = await transcribeGroq(mp3Path);
     } else {
-      // Convert WebM → MP3 (playback) + WAV (Whisper)
+      // Convert audio → MP3 (playback) + WAV (Whisper)
       await run(FFMPEG_BIN, [
-        "-y", "-fflags", "+genpts", "-i", rawWebmPath,
+        "-y", "-fflags", "+genpts", "-i", rawAudioPath,
         "-q:a", "4", mp3Path,
         "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", wavPath,
       ]);
@@ -133,7 +139,7 @@ export async function POST(req: NextRequest) {
     const message = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: message }, { status: 500 });
   } finally {
-    for (const f of [rawWebmPath, wavPath]) {
+    for (const f of [rawAudioPath, wavPath]) {
       try { await unlink(f); } catch {}
     }
   }
