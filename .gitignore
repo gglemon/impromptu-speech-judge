@@ -42,3 +42,4 @@ next-env.d.ts
 
 # recorded audio files
 /public/recordings/*.mp3
+.superpowers/
