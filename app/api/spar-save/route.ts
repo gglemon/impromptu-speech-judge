@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir, readdir, stat, rm } from "fs/promises";
 import path from "path";
+import { auth } from "@/auth";
 
 const SESSIONS_DIR = path.join(process.cwd(), "spar-sessions");
 const TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -39,6 +40,7 @@ async function cleanOldSessions() {
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await auth();
     const formData = await req.formData();
 
     const sessionDataRaw = formData.get("sessionData");
@@ -47,6 +49,12 @@ export async function POST(req: NextRequest) {
     }
     const sessionData = JSON.parse(sessionDataRaw);
     const { resolution } = sessionData;
+
+    // Tag with authenticated user if available
+    if (session?.user?.email) {
+      sessionData.userId = session.user.email;
+      sessionData.userName = session.user.name ?? undefined;
+    }
 
     // Build directory path
     const topicSlug = slugify(resolution ?? "unknown-topic");
