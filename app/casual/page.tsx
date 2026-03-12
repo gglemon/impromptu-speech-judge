@@ -286,7 +286,7 @@ export default function CasualPage() {
 
             <p className="text-gray-400 text-center text-sm">Read the example, then give your own speech!</p>
             <button
-              onClick={() => { stopSpeaking(); setStage("recording"); }}
+              onClick={() => { if (!session?.user) { signIn("google"); return; } stopSpeaking(); setStage("recording"); }}
               className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-bold text-lg rounded-xl transition-all duration-200 cursor-pointer shadow-lg shadow-emerald-500/20"
             >
               Start Speaking 🎤
