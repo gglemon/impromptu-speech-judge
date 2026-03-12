@@ -82,6 +82,16 @@ function IconFire({ className }: { className?: string }) {
 // ─── Data ────────────────────────────────────────────────────────────────────
 
 
+const DAILY_TIPS = [
+  "Eye contact builds trust — pick 3 points in the room and rotate between them.",
+  "Pause for 2 full seconds before your key argument. Silence signals confidence.",
+  "Hook your audience in the first 10 seconds with a question or bold claim.",
+  "Use the rule of three — three points, three examples, three seconds of pause.",
+  "Vary your pace: slow down for emphasis, speed up to build momentum.",
+  "Your voice is an instrument. Practice going from a whisper to full projection.",
+  "End with a call to action, not just a summary — give your audience something to do.",
+];
+
 interface LastMode {
   title: string;
   href: string;
@@ -184,6 +194,7 @@ export default function Home() {
   const [lastMode, setLastMode] = useState<LastMode | null>(null);
   const [sessionCount, setSessionCount] = useState(0);
   const [streak, setStreak] = useState(0);
+  const dailyTip = DAILY_TIPS[new Date().getDay()];
 
   useEffect(() => {
     try {
@@ -289,6 +300,17 @@ export default function Home() {
             </Link>
           </div>
         )}
+
+        {/* ── Daily tip ──────────────────────────────────────────────────── */}
+        <div className="flex gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3.5">
+          <div className="w-0.5 rounded-full bg-indigo-500/50 shrink-0 self-stretch" />
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-indigo-400 mb-1">
+              Tip of the day
+            </p>
+            <p className="text-sm text-slate-300 leading-relaxed">{dailyTip}</p>
+          </div>
+        </div>
 
         {/* ── Mode grid ──────────────────────────────────────────────────── */}
         <div>
