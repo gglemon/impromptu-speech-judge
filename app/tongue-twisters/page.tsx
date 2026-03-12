@@ -195,7 +195,7 @@ export default function TongueTwistersPage() {
             </div>
 
             {/* Twister card */}
-            <div className="rounded-2xl bg-pink-500/10 border border-pink-500/25 p-6 space-y-4 text-center">
+            <div className="rounded-2xl bg-pink-500/10 border border-pink-500/25 p-6 text-center min-h-[9rem] flex flex-col items-center justify-center gap-4">
               <p className="text-pink-300 text-sm font-medium uppercase tracking-wide">Your Tongue Twister</p>
               <p className="text-2xl font-bold text-white leading-snug">{twister}</p>
               <button
@@ -238,7 +238,7 @@ export default function TongueTwistersPage() {
         {/* Ready */}
         {stage === "ready" && (
           <div className="space-y-6">
-            <div className="rounded-2xl bg-pink-500/10 border border-pink-500/25 p-6 text-center space-y-3">
+            <div className="rounded-2xl bg-pink-500/10 border border-pink-500/25 p-6 text-center min-h-[9rem] flex flex-col items-center justify-center gap-3">
               <p className="text-pink-300 text-sm font-medium uppercase tracking-wide">
                 Say this {repetitions}× in a row
               </p>
