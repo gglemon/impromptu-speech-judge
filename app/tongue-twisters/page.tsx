@@ -57,9 +57,17 @@ export default function TongueTwistersPage() {
   const [error, setError] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
 
-  // Load twister from sessionStorage on mount (client-only)
+  // Load difficulty + twister from sessionStorage on mount (restores after OAuth redirect)
   useEffect(() => {
-    setTwister(getStableTwister("easy"));
+    try {
+      const savedDiff = sessionStorage.getItem("tt:difficulty") as Difficulty | null;
+      const diff: Difficulty = (savedDiff === "easy" || savedDiff === "medium" || savedDiff === "hard") ? savedDiff : "easy";
+      setDifficulty(diff);
+      prevDifficultyRef.current = diff;
+      setTwister(getStableTwister(diff));
+    } catch {
+      setTwister(getStableTwister("easy"));
+    }
   }, []);
 
   function pickNewTwister(diff: Difficulty) {
@@ -70,6 +78,7 @@ export default function TongueTwistersPage() {
   useEffect(() => {
     if (difficulty === prevDifficultyRef.current) return;
     prevDifficultyRef.current = difficulty;
+    try { sessionStorage.setItem("tt:difficulty", difficulty); } catch {}
     setTwister(getStableTwister(difficulty));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [difficulty]);
@@ -218,7 +227,7 @@ export default function TongueTwistersPage() {
             </div>
 
             <button
-              onClick={() => { if (!session?.user) { signIn("google"); return; } setStage("ready"); }}
+              onClick={() => { if (!session?.user) { try { sessionStorage.setItem("tt:difficulty", difficulty); } catch {} signIn("google"); return; } setStage("ready"); }}
               className="w-full py-4 bg-pink-600 hover:bg-pink-500 active:scale-[0.99] text-white font-bold text-lg rounded-xl transition-all duration-200 cursor-pointer shadow-lg shadow-pink-500/20"
             >
               Ready for Practice

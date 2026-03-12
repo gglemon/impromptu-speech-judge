@@ -28,6 +28,8 @@ export default function HeaderAuth() {
               sessionStorage.removeItem("spar:topicOptions");
               sessionStorage.removeItem("spar:selectedTopic");
               sessionStorage.removeItem("impromptu:settings");
+              sessionStorage.removeItem("tt:difficulty");
+              ["easy", "medium", "hard"].forEach(d => sessionStorage.removeItem(`tt:twister:${d}`));
             } catch {}
             signOut({ callbackUrl: "/" });
           }}
