@@ -572,27 +572,6 @@ export default function DebatePracticePage() {
             </div>
           )}
 
-          {/* Past arguments history */}
-          {results.length > 0 && (
-            <div className="rounded-xl border border-gray-700 bg-gray-900 p-4 space-y-3">
-              <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Your previous arguments</p>
-              <div className="space-y-2">
-                {results.map((r, i) => {
-                  const rIsAff = r.side === "aff";
-                  const tagColor = rIsAff ? "text-purple-400" : "text-orange-400";
-                  const scoreColor = r.score >= 8 ? "text-green-400" : r.score >= 6 ? "text-yellow-400" : "text-red-400";
-                  return (
-                    <div key={i} className="flex gap-3 text-sm">
-                      <span className={`shrink-0 font-semibold ${tagColor}`}>{rIsAff ? "AFF" : "NEG"} R{r.round}</span>
-                      <span className="text-gray-300 flex-1">{r.transcript}</span>
-                      <span className={`shrink-0 font-bold ${scoreColor}`}>{r.score}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           <div className="flex flex-col items-center gap-6">
             <div className="flex rounded-xl overflow-hidden border border-gray-700">
               <button
@@ -603,13 +582,15 @@ export default function DebatePracticePage() {
               </button>
               <button
                 onClick={() => setInputMode("text")}
-                className={`px-6 py-2 text-sm font-semibold transition-colors ${inputMode === "text" ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-500 hover:text-gray-300"}`}
+                disabled={recordingStarted}
+                className={`px-6 py-2 text-sm font-semibold transition-colors ${recordingStarted ? "opacity-40 cursor-not-allowed" : ""} ${inputMode === "text" ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-500 hover:text-gray-300"}`}
               >
                 ✏️ Text
               </button>
               <button
                 onClick={() => { setInputMode("ai"); if (!hint && !hintLoading) fetchHint(); }}
-                className={`px-6 py-2 text-sm font-semibold transition-colors ${inputMode === "ai" ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-500 hover:text-gray-300"}`}
+                disabled={recordingStarted}
+                className={`px-6 py-2 text-sm font-semibold transition-colors ${recordingStarted ? "opacity-40 cursor-not-allowed" : ""} ${inputMode === "ai" ? "bg-gray-700 text-white" : "bg-gray-900 text-gray-500 hover:text-gray-300"}`}
               >
                 💡 AI
               </button>
@@ -664,6 +645,27 @@ export default function DebatePracticePage() {
               </div>
             )}
           </div>
+
+          {/* Past arguments history */}
+          {results.length > 0 && (
+            <div className="rounded-xl border border-gray-700 bg-gray-900 p-4 space-y-3">
+              <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Your previous arguments</p>
+              <div className="space-y-2">
+                {results.map((r, i) => {
+                  const rIsAff = r.side === "aff";
+                  const tagColor = rIsAff ? "text-purple-400" : "text-orange-400";
+                  const scoreColor = r.score >= 8 ? "text-green-400" : r.score >= 6 ? "text-yellow-400" : "text-red-400";
+                  return (
+                    <div key={i} className="flex gap-3 text-sm">
+                      <span className={`shrink-0 font-semibold ${tagColor}`}>{rIsAff ? "AFF" : "NEG"} R{r.round}</span>
+                      <span className="text-gray-300 flex-1">{r.transcript}</span>
+                      <span className={`shrink-0 font-bold ${scoreColor}`}>{r.score}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <TurnIndicator current={turnIndex} turns={activeTurns} />
         </div>
