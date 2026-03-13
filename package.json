@@ -9,7 +9,8 @@
     "start": "scripts/start-ollama.sh && scripts/start-caddy.sh && next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "stop": "scripts/stop.sh"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
