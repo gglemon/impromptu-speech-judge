@@ -30,6 +30,9 @@ function SessionContent() {
   const [topic, setTopic] = useState("");
   const [words, setWords] = useState<string[]>([]);
   const [remaining, setRemaining] = useState(thinkTimeSeconds);
+  const [graceRemaining, setGraceRemaining] = useState(10);
+  const [isInGrace, setIsInGrace] = useState(false);
+  const [forceStop, setForceStop] = useState(false);
   const [processingMsg, setProcessingMsg] = useState("Transcribing...");
   const [transcript, setTranscript] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
@@ -85,11 +88,32 @@ function SessionContent() {
   useEffect(() => {
     if (state !== "recording") return;
     setRemaining(speechLengthSeconds);
+    setGraceRemaining(10);
+    setIsInGrace(false);
+    setForceStop(false);
+
+    let inGrace = false;
+    let graceLeft = 10;
+
     timerRef.current = setInterval(() => {
-      setRemaining((r) => {
-        if (r <= 1) { clearInterval(timerRef.current!); timerRef.current = null; return 0; }
-        return r - 1;
-      });
+      if (!inGrace) {
+        setRemaining((r) => {
+          if (r <= 1) {
+            inGrace = true;
+            setIsInGrace(true);
+            return 0;
+          }
+          return r - 1;
+        });
+      } else {
+        graceLeft -= 1;
+        setGraceRemaining(graceLeft);
+        if (graceLeft <= 0) {
+          clearInterval(timerRef.current!);
+          timerRef.current = null;
+          setForceStop(true);
+        }
+      }
     }, 1000);
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -180,14 +204,35 @@ function SessionContent() {
           <p className="text-sm uppercase tracking-widest text-gray-400">Speaking on</p>
           <p className="text-2xl font-bold text-white">{topic}</p>
         </div>
-        <CountdownTimer
-          totalSeconds={speechLengthSeconds}
-          remainingSeconds={remaining}
-          onComplete={() => {}}
-          onSkip={() => {}}
-          hideSkip
-        />
-        <AudioRecorder onStop={handleRecordingStop} />
+        {isInGrace ? (
+          <div className="flex flex-col items-center gap-3">
+            <div className="relative w-40 h-40 flex items-center justify-center">
+              <svg className="w-full h-full -rotate-90 absolute" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="54" fill="none" stroke="#1f2937" strokeWidth="8" />
+                <circle
+                  cx="60" cy="60" r="54" fill="none" stroke="#ef4444" strokeWidth="8"
+                  strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 54}
+                  strokeDashoffset={2 * Math.PI * 54 * (1 - graceRemaining / 10)}
+                  style={{ transition: "stroke-dashoffset 1s linear" }}
+                />
+              </svg>
+              <span className="text-3xl font-mono font-bold text-red-400 animate-pulse">
+                {String(graceRemaining).padStart(2, "0")}s
+              </span>
+            </div>
+            <p className="text-red-400 text-sm font-semibold animate-pulse">Wrapping up…</p>
+          </div>
+        ) : (
+          <CountdownTimer
+            totalSeconds={speechLengthSeconds}
+            remainingSeconds={remaining}
+            onComplete={() => {}}
+            onSkip={() => {}}
+            hideSkip
+          />
+        )}
+        <AudioRecorder onStop={handleRecordingStop} forceStop={forceStop} />
       </div>
     );
   }

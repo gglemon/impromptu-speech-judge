@@ -15,14 +15,30 @@ export async function POST(req: NextRequest) {
     const aiSideShort = userSide === "aff" ? "neg" : "aff";
     const voteDirection = aiSide === "Affirmative" ? "for" : "against";
     const languageStyle = getLanguageStyle(difficulty);
-    const aiStrengthGuide = aiDifficulty === "easy"
-      ? "IMPORTANT: Deliberately make a somewhat weak argument. Leave at least one obvious logical gap or unsupported claim the opponent can exploit. Use vague or unconvincing reasoning for at least one of your three arguments. Make it beatable but not absurd."
-      : aiDifficulty === "hard"
-      ? "IMPORTANT: Make the strongest possible argument. Use airtight logic, anticipate counterarguments, and leave no obvious weaknesses."
-      : "";
 
-    const text = await callLLM(
-      `You are a competitive debater arguing the ${aiSide} side of this resolution.
+    let prompt: string;
+
+    if (aiDifficulty === "easy") {
+      prompt = `You are roleplaying a 3rd-grade student who is brand new to speech and debate. You barely understand what a "resolution" is.
+
+Resolution: ${resolution}
+
+Write a short, weak constructive speech of about 60–80 words arguing the ${aiSide} side. You must:
+- Sound like a nervous, inexperienced 3rd grader who doesn't know debate rules
+- Give only 1 vague point with no real evidence — just a personal feeling or simple example
+- Ramble or repeat yourself a little
+- NOT use debate structure (no "criterion", no numbered arguments, no "in conclusion")
+- Use very simple words and short sentences
+- Start with "Um, hi. My name is Alex and I think..." or similar awkward opener
+
+Return ONLY valid JSON (no markdown, no code blocks):
+{ "ai_constructive": "<60-80 word weak speech>" }`;
+    } else {
+      const aiStrengthGuide = aiDifficulty === "hard"
+        ? "IMPORTANT: Make the strongest possible argument. Use airtight logic, anticipate counterarguments, and leave no obvious weaknesses."
+        : "";
+
+      prompt = `You are a competitive debater arguing the ${aiSide} side of this resolution.
 
 LANGUAGE STYLE: ${languageStyle}
 ${aiStrengthGuide ? `\n${aiStrengthGuide}\n` : ""}
@@ -36,8 +52,10 @@ CONSTRUCTIVE SPEECH (300 words): Begin "Hello, my name is AI Debate Agent, and I
 Return ONLY valid JSON (no markdown, no code blocks):
 {
   "ai_constructive": "<exactly 300 word constructive speech>"
-}`
-    , req.signal);
+}`;
+    }
+
+    const text = await callLLM(prompt, req.signal);
 
     const result = parseLLMJson(text);
     return NextResponse.json({ ...result, aiSide: aiSideShort });

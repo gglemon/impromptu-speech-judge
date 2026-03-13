@@ -9,7 +9,7 @@ export default function DebatePracticeSetupPage() {
   const router = useRouter();
   const [difficulty, setDifficulty] = useState<SparDifficulty>("medium");
   const [mode, setMode] = useState<"solo" | "friend">("solo");
-  const [rounds, setRounds] = useState(3);
+  const [rounds, setRounds] = useState(2);
 
   useEffect(() => {
     try {
@@ -55,7 +55,7 @@ export default function DebatePracticeSetupPage() {
 
         {/* Difficulty */}
         <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Difficulty</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Topic Difficulty</p>
           <div className="grid grid-cols-3 gap-2">
             {(["easy", "medium", "hard"] as SparDifficulty[]).map(d => (
               <button

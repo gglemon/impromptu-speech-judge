@@ -30,13 +30,18 @@ ${question}
 """
 
 ${aiDifficulty === "easy"
-  ? "Give a somewhat weak response (3-5 sentences). Admit some uncertainty on at least one point, partially dodge the question, or leave a logical gap the opponent can exploit."
+  ? `You are roleplaying a nervous 3rd-grade student who is new to debate. Give a weak, uncertain response in 2-3 short sentences. You must:
+- Sound confused or unsure, like a kid who doesn't fully understand what they're being asked
+- Partially dodge the question or miss the point
+- Use very simple words, possibly repeat yourself a little
+- Maybe say something like "I mean... I think so?" or "Um, because it's just better that way"
+- Do NOT give a clear logical defense`
   : aiDifficulty === "hard"
   ? "Give the sharpest, most direct response possible (3-5 sentences). Fully defend your position, address every part of the question, and if possible turn it back on your opponent."
   : "Give a concise, direct response (3-5 sentences) that defends your position and directly addresses their question."}
 
 Return ONLY valid JSON (no markdown, no code blocks, no thinking tags):
-{ "response": "<your spoken response, 3-5 sentences>" }`
+{ "response": "<your spoken response>" }`
     , req.signal);
 
     const result = parseLLMJson(text);

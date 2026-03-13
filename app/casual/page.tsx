@@ -270,7 +270,25 @@ export default function CasualPage() {
                       </button>
                     )}
                   </div>
-                  <p className="text-gray-200 text-sm leading-relaxed">{aiExample}</p>
+                  <div className="text-gray-200 text-sm leading-relaxed space-y-3">
+                    {aiExample.split(/\n\n+/).map((block, i) => {
+                      const lines = block.split("\n").map(l => l.trim()).filter(Boolean);
+                      const isBulletBlock = lines.every(l => l.startsWith("- ") || l.startsWith("• "));
+                      if (isBulletBlock) {
+                        return (
+                          <ul key={i} className="space-y-1 pl-1">
+                            {lines.map((l, j) => (
+                              <li key={j} className="flex gap-2">
+                                <span className="text-emerald-400 mt-0.5 shrink-0">•</span>
+                                <span>{l.replace(/^[-•]\s*/, "")}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        );
+                      }
+                      return <p key={i}>{block.trim()}</p>;
+                    })}
+                  </div>
                 </div>
               )}
             </div>

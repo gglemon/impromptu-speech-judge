@@ -70,7 +70,7 @@ export default function SparSetupPage() {
 
         {/* Difficulty */}
         <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Difficulty</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Topic Difficulty</p>
           <div className="grid grid-cols-3 gap-2">
             {(["easy", "medium", "hard"] as SparDifficulty[]).map(d => (
               <button

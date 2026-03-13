@@ -21,6 +21,7 @@ function run(cmd: string, args: string[]): Promise<{ stdout: string; stderr: str
     let stderr = "";
     proc.stdout.on("data", (d) => (stdout += d));
     proc.stderr.on("data", (d) => (stderr += d));
+    proc.on("error", (err) => reject(err));
     proc.on("close", (code) => {
       if (code === 0) resolve({ stdout, stderr });
       else reject(new Error(stderr || `Process exited with code ${code}`));
@@ -46,14 +47,14 @@ async function cleanupOldRecordings() {
   }
 }
 
-async function transcribeGroq(mp3Path: string): Promise<string> {
+async function transcribeGroq(audioPath: string, mimeType: string): Promise<string> {
   if (!GROQ_API_KEY) throw new Error("GROQ_API_KEY is not set");
   const { readFile } = await import("fs/promises");
-  const audioBuffer = await readFile(mp3Path);
-  const audioBlob = new Blob([audioBuffer], { type: "audio/mpeg" });
+  const audioBuffer = await readFile(audioPath);
+  const audioBlob = new Blob([audioBuffer], { type: mimeType });
 
   const formData = new FormData();
-  formData.append("file", audioBlob, "audio.mp3");
+  formData.append("file", audioBlob, `audio.${mimeType.split("/")[1] ?? "webm"}`);
   formData.append("model", "whisper-large-v3");
   formData.append("language", "en");
   formData.append("response_format", "json");
@@ -118,12 +119,18 @@ export async function POST(req: NextRequest) {
     let transcript: string;
 
     if (STT_PROVIDER === "groq") {
-      // Convert WebM → MP3 (for playback + Groq)
-      await run(FFMPEG_BIN, [
-        "-y", "-fflags", "+genpts", "-i", rawAudioPath,
-        "-q:a", "4", mp3Path,
-      ]);
-      transcript = await transcribeGroq(mp3Path);
+      // Send audio directly to Groq — supports webm, m4a, mp3, wav, etc. natively
+      const mimeType = audioBlob.type || "audio/webm";
+      transcript = await transcribeGroq(rawAudioPath, mimeType);
+
+      // Best-effort: convert to MP3 for playback (only if ffmpeg available)
+      try {
+        await run(FFMPEG_BIN, ["-y", "-fflags", "+genpts", "-i", rawAudioPath, "-q:a", "4", mp3Path]);
+      } catch {
+        // ffmpeg not available — serve the original audio instead
+        const { copyFile } = await import("fs/promises");
+        await copyFile(rawAudioPath, mp3Path);
+      }
     } else {
       // Convert audio → MP3 (playback) + WAV (Whisper)
       await run(FFMPEG_BIN, [

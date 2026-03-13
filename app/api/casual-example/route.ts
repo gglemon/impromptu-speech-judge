@@ -22,8 +22,15 @@ Topic: "${topic}"
 
 Write it like a confident 3rd or 4th grader: short sentences, simple everyday words, concrete examples from school or home. Be enthusiastic and friendly. The speech should be about ${wordTarget} words long (for a ${speechLength}-second speech).
 
+Structure the speech clearly with:
+- An opening paragraph (hook or greeting)
+- A middle section with 2–3 key points, each starting with "- " on its own line
+- A closing paragraph
+
+Separate each section with a blank line. Do NOT use headers or titles — just the speech text.
+
 Return ONLY valid JSON (no markdown, no code blocks, no thinking tags):
-{ "ai_example": "<the example speech, about ${wordTarget} words>" }`,
+{ "ai_example": "<the structured speech>" }`,
       req.signal
     );
 

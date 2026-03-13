@@ -4,11 +4,12 @@ import { useEffect, useRef, useState } from "react";
 
 interface AudioRecorderProps {
   onStop: (transcript: string, durationSeconds: number, audioUrl: string) => void;
+  forceStop?: boolean;
 }
 
 type Stage = "recording" | "transcribing" | "fallback";
 
-export default function AudioRecorder({ onStop }: AudioRecorderProps) {
+export default function AudioRecorder({ onStop, forceStop }: AudioRecorderProps) {
   const [stage, setStage] = useState<Stage>("recording");
   const [elapsed, setElapsed] = useState(0);
   const [manualText, setManualText] = useState("");
@@ -19,6 +20,8 @@ export default function AudioRecorder({ onStop }: AudioRecorderProps) {
   const chunksRef = useRef<Blob[]>([]);
   const onStopRef = useRef(onStop);
   onStopRef.current = onStop;
+  const stageRef = useRef(stage);
+  stageRef.current = stage;
 
   useEffect(() => {
     let stream: MediaStream;
@@ -48,6 +51,14 @@ export default function AudioRecorder({ onStop }: AudioRecorderProps) {
       stream?.getTracks().forEach((t) => t.stop());
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-stop when parent signals grace period expired
+  useEffect(() => {
+    if (forceStop && stageRef.current === "recording") {
+      handleStop();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forceStop]);
 
   async function handleStop() {
     if (intervalRef.current) clearInterval(intervalRef.current);

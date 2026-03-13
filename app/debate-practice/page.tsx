@@ -134,9 +134,8 @@ export default function DebatePracticePage() {
   const [turnIndex, setTurnIndex] = useState(0);
   const [difficulty, setDifficulty] = useState<SparDifficulty>("medium");
   const [practiceMode, setPracticeMode] = useState<"solo" | "friend">("solo");
-  const [userSide, setUserSide] = useState<"aff" | "neg">("aff");
-  const [preferredSide, setPreferredSide] = useState<"aff" | "neg" | "random">("random");
-  const [singleSideMode, setSingleSideMode] = useState(false);
+  const [userSide] = useState<"aff" | "neg">("aff");
+  const [singleSideMode] = useState(false);
   const [numRounds, setNumRounds] = useState(3);
   const [currentTranscript, setCurrentTranscript] = useState("");
   const [currentFeedback, setCurrentFeedback] = useState<ArgumentFeedback | null>(null);
@@ -496,33 +495,8 @@ export default function DebatePracticePage() {
           </div>
 
           <div className="space-y-3">
-            <p className="text-sm font-medium text-gray-300 text-center">Your Side</p>
-            <div className="grid grid-cols-3 gap-2">
-              {([
-                { value: "aff", label: "Affirmative", emoji: "✅" },
-                { value: "random", label: "Random", emoji: "🎲" },
-                { value: "neg", label: "Negative", emoji: "❌" },
-              ] as const).map(opt => (
-                <button
-                  key={opt.value}
-                  onClick={() => setPreferredSide(opt.value)}
-                  className={`py-2.5 rounded-xl text-sm font-semibold border transition-colors ${
-                    preferredSide === opt.value
-                      ? opt.value === "aff" ? "bg-purple-900 border-purple-600 text-purple-300"
-                        : opt.value === "neg" ? "bg-orange-900 border-orange-600 text-orange-300"
-                        : "bg-blue-900 border-blue-600 text-blue-300"
-                      : "bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500"
-                  }`}
-                >
-                  {opt.emoji} {opt.label}
-                </button>
-              ))}
-            </div>
-            <p className="text-xs text-gray-500 text-center">
-              {preferredSide === "aff" ? "You always argue FOR the resolution"
-                : preferredSide === "neg" ? "You always argue AGAINST the resolution"
-                : "AFF and NEG turns alternate for both sides"}
-            </p>
+            <p className="text-sm font-medium text-gray-300 text-center">You will argue both sides</p>
+            <p className="text-xs text-gray-500 text-center">AFF and NEG turns alternate — practice the full resolution</p>
           </div>
 
           {practiceMode === "friend" && (
@@ -530,16 +504,15 @@ export default function DebatePracticePage() {
               <p className="text-xs text-gray-500 text-center">Which side will YOU argue?</p>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setUserSide("aff")}
-                  className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors ${userSide === "aff" ? "bg-purple-900 border-purple-600 text-purple-300" : "bg-gray-900 border-gray-700 text-gray-400 hover:text-white"}`}
+                  onClick={() => {}}
+                  className="flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors bg-purple-900 border-purple-600 text-purple-300"
                 >
                   Affirmative (PRO)
                 </button>
                 <button
-                  onClick={() => setUserSide("neg")}
-                  className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors ${userSide === "neg" ? "bg-orange-900 border-orange-600 text-orange-300" : "bg-gray-900 border-gray-700 text-gray-400 hover:text-white"}`}
+                  className="flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors bg-gray-900 border-gray-700 text-gray-400"
                 >
-                  Negative (CON)
+                  Negative (CON) — Friend
                 </button>
               </div>
             </div>
@@ -548,9 +521,6 @@ export default function DebatePracticePage() {
           <button
             onClick={() => {
               try { sessionStorage.removeItem("debate:topic"); sessionStorage.removeItem("debate:settings"); } catch {}
-              const resolved: "aff" | "neg" = preferredSide === "random" ? (Math.random() < 0.5 ? "aff" : "neg") : preferredSide;
-              setUserSide(resolved);
-              setSingleSideMode(preferredSide !== "random");
               setStage("recording");
             }}
             className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-colors text-lg"

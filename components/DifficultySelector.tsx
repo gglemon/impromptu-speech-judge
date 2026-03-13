@@ -18,7 +18,7 @@ const difficulties: { value: Difficulty; label: string; description: string }[] 
 ];
 
 const thinkTimeOptions: { value: number; label: string }[] = [
-  { value: 0, label: "0s" },
+  { value: 5, label: "5s" },
   { value: 30, label: "30s" },
   { value: 60, label: "1 min" },
   { value: 120, label: "2 min" },

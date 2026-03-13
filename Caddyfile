@@ -1,0 +1,8 @@
+https://192.168.86.48 {
+	tls internal
+	reverse_proxy localhost:3000
+}
+
+http://192.168.86.48 {
+	redir https://192.168.86.48{uri} permanent
+}
