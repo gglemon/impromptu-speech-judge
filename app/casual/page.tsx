@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useSession, signIn } from "next-auth/react";
 import AudioRecorder from "@/components/AudioRecorder";
 import AudioPlayer from "@/components/AudioPlayer";
 import CasualFeedbackReport from "@/components/CasualFeedbackReport";
@@ -21,7 +20,6 @@ interface CasualFeedback {
 }
 
 export default function CasualPage() {
-  const { data: session } = useSession();
   const [stage, setStage] = useState<Stage>("loading");
   const [topic, setTopic] = useState("");
   const [transcript, setTranscript] = useState("");
@@ -191,7 +189,6 @@ export default function CasualPage() {
 
             <button
               onClick={() => {
-                if (!session?.user) { signIn("google"); return; }
                 stopSpeaking(); setStage("practice");
               }}
               className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-bold text-lg rounded-xl transition-all duration-200 cursor-pointer shadow-lg shadow-emerald-500/20"

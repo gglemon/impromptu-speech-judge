@@ -1,7 +1,10 @@
-export { auth as middleware } from "@/auth";
+import { NextResponse } from "next/server";
+
+// No auth gating - all pages are publicly accessible
+export function middleware() {
+  return NextResponse.next();
+}
 
 export const config = {
-  matcher: [
-    "/session/:path*",
-  ],
+  matcher: [],
 };

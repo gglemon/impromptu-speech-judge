@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSession, signIn } from "next-auth/react";
 import AudioRecorder from "@/components/AudioRecorder";
 import { getTopicsByDifficulty, type SparDifficulty } from "@/lib/sparTopics";
 
@@ -129,8 +128,7 @@ function advanceState(
 }
 
 export default function DebatePracticePage() {
-  const { data: session } = useSession();
-  const userEmail = session?.user?.email ?? "";
+  const userEmail = "";
   const [topic, setTopic] = useState<string>("");
   const [stage, setStage] = useState<Stage>("intro");
   const [turnIndex, setTurnIndex] = useState(0);
@@ -549,11 +547,6 @@ export default function DebatePracticePage() {
 
           <button
             onClick={() => {
-              if (!session?.user) {
-                try { sessionStorage.setItem("debate:topic", topic); } catch {}
-                signIn("google");
-                return;
-              }
               try { sessionStorage.removeItem("debate:topic"); sessionStorage.removeItem("debate:settings"); } catch {}
               const resolved: "aff" | "neg" = preferredSide === "random" ? (Math.random() < 0.5 ? "aff" : "neg") : preferredSide;
               setUserSide(resolved);

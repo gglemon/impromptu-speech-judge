@@ -51,7 +51,7 @@ Return ONLY valid JSON (no markdown, no code blocks, no thinking tags):
       req.signal
     );
 
-    parseLLMJson(text));
+    return NextResponse.json(parseLLMJson(text));
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: message }, { status: 500 });

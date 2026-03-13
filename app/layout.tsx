@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SessionProvider } from "next-auth/react";
-import HeaderAuth from "@/components/HeaderAuth";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -25,20 +23,17 @@ export default function RootLayout({
           backgroundAttachment: "fixed",
         }}
       >
-        <SessionProvider>
-          <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#09090f]/80 backdrop-blur-md">
-            <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
-              <Link
-                href="/"
-                className="font-display text-sm font-black text-white tracking-tight hover:text-slate-300 transition-colors"
-              >
-                Speech &amp; Debate
-              </Link>
-              <HeaderAuth />
-            </div>
-          </header>
-          {children}
-        </SessionProvider>
+        <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#09090f]/80 backdrop-blur-md">
+          <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
+            <Link
+              href="/"
+              className="font-display text-sm font-black text-white tracking-tight hover:text-slate-300 transition-colors"
+            >
+              Speech &amp; Debate
+            </Link>
+          </div>
+        </header>
+        {children}
       </body>
     </html>
   );

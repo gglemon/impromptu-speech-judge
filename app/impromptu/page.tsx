@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSession, signIn } from "next-auth/react";
 import DifficultySelector from "@/components/DifficultySelector";
 
 type Difficulty = "easy" | "medium" | "hard";
@@ -12,7 +11,6 @@ const STORAGE_KEY = "impromptu:settings";
 
 export default function ImpromptuHome() {
   const router = useRouter();
-  const { data: session } = useSession();
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [thinkTime, setThinkTime] = useState(120);
   const [speechLength, setSpeechLength] = useState(300);
@@ -35,11 +33,6 @@ export default function ImpromptuHome() {
   }
 
   function handleStart() {
-    if (!session?.user) {
-      saveSettings();
-      signIn("google");
-      return;
-    }
     sessionStorage.removeItem(STORAGE_KEY);
     router.push(`/session?difficulty=${difficulty}&thinkTime=${thinkTime}&speechLength=${speechLength}`);
   }
