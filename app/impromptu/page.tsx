@@ -35,11 +35,6 @@ export default function ImpromptuHome() {
   }
 
   function handleStart() {
-    if (!session?.user) {
-      saveSettings();
-      signIn("google");
-      return;
-    }
     sessionStorage.removeItem(STORAGE_KEY);
     router.push(`/session?difficulty=${difficulty}&thinkTime=${thinkTime}&speechLength=${speechLength}`);
   }

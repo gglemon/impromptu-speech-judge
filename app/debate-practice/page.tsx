@@ -549,11 +549,6 @@ export default function DebatePracticePage() {
 
           <button
             onClick={() => {
-              if (!session?.user) {
-                try { sessionStorage.setItem("debate:topic", topic); } catch {}
-                signIn("google");
-                return;
-              }
               try { sessionStorage.removeItem("debate:topic"); sessionStorage.removeItem("debate:settings"); } catch {}
               const resolved: "aff" | "neg" = preferredSide === "random" ? (Math.random() < 0.5 ? "aff" : "neg") : preferredSide;
               setUserSide(resolved);

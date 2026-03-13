@@ -537,7 +537,6 @@ export default function SparPage() {
   // ── Setup / prep ──────────────────────────────────────────────────────────
 
   const handleStart = async () => {
-    if (!session?.user) { signIn("google"); return; }
     try { sessionStorage.removeItem("spar:topicOptions"); sessionStorage.removeItem("spar:selectedTopic"); } catch {}
     abortRef.current?.abort();
     abortRef.current = new AbortController();
