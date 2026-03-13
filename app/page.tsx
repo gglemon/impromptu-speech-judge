@@ -188,58 +188,7 @@ const features: Feature[] = [
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function Home() {
-  const [lastMode, setLastMode] = useState<LastMode | null>(null);
-  const [sessionCount, setSessionCount] = useState(0);
-  const [streak, setStreak] = useState(0);
   const dailyTip = DAILY_TIPS[new Date().getDay()];
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("sda:lastMode");
-      if (stored) setLastMode(JSON.parse(stored));
-
-      const count = parseInt(localStorage.getItem("sda:sessions") || "0", 10);
-      setSessionCount(count);
-
-      // Streak: compare last-visit date to today
-      const lastDate = localStorage.getItem("sda:lastDate");
-      const today = new Date().toDateString();
-      const storedStreak = parseInt(localStorage.getItem("sda:streak") || "0", 10);
-      const yesterday = new Date(Date.now() - 86400000).toDateString();
-
-      if (lastDate === today) {
-        setStreak(storedStreak);
-      } else if (lastDate === yesterday) {
-        const newStreak = storedStreak + 1;
-        localStorage.setItem("sda:streak", String(newStreak));
-        localStorage.setItem("sda:lastDate", today);
-        setStreak(newStreak);
-      } else if (!lastDate) {
-        localStorage.setItem("sda:lastDate", today);
-        localStorage.setItem("sda:streak", "1");
-        setStreak(1);
-      } else {
-        localStorage.setItem("sda:streak", "1");
-        localStorage.setItem("sda:lastDate", today);
-        setStreak(1);
-      }
-    } catch {}
-  }, []);
-
-  function handleModeClick(feature: Feature) {
-    if (!feature.href) return;
-    try {
-      const mode: LastMode = {
-        title: feature.title,
-        href: feature.href,
-        ...feature.lastModeInfo,
-      };
-      localStorage.setItem("sda:lastMode", JSON.stringify(mode));
-      const count = parseInt(localStorage.getItem("sda:sessions") || "0", 10);
-      localStorage.setItem("sda:sessions", String(count + 1));
-      localStorage.setItem("sda:lastDate", new Date().toDateString());
-    } catch {}
-  }
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center py-12 px-6">
@@ -258,45 +207,6 @@ export default function Home() {
             Practice and improve your speaking skills with AI
           </p>
         </div>
-
-        {/* ── Stats strip ────────────────────────────────────────────────── */}
-        {(sessionCount > 0 || streak > 0) && (
-          <div className="flex items-center justify-center gap-3 flex-wrap">
-            {sessionCount > 0 && (
-              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm">
-                <IconCheck className="w-3.5 h-3.5" />
-                <span className="font-semibold">{sessionCount}</span>
-                <span className="text-emerald-500">{sessionCount === 1 ? "session" : "sessions"} practiced</span>
-              </div>
-            )}
-            {streak > 0 && (
-              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm">
-                <IconFire className="w-3.5 h-3.5" />
-                <span className="font-semibold">{streak}</span>
-                <span className="text-orange-500">{streak === 1 ? "day" : "day"} streak</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── Jump back in ───────────────────────────────────────────────── */}
-        {lastMode && (
-          <div className={`flex items-center justify-between gap-4 rounded-2xl border ${lastMode.accentBorder} ${lastMode.accentBg} px-5 py-4`}>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-0.5">
-                Jump back in
-              </p>
-              <p className="font-semibold text-white truncate">{lastMode.title}</p>
-            </div>
-            <Link
-              href={lastMode.href}
-              className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 ${lastMode.accentText} text-sm font-semibold transition-all duration-200 cursor-pointer`}
-            >
-              Continue
-              <IconArrow className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        )}
 
         {/* ── Daily tip ──────────────────────────────────────────────────── */}
         <div className="flex gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3.5">
@@ -367,7 +277,6 @@ export default function Home() {
                 <Link
                   key={href}
                   href={href!}
-                  onClick={() => handleModeClick(feature)}
                   className={`group ${cardClass} border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] ${cardHover} cursor-pointer hover:-translate-y-0.5`}
                 >
                   {inner}
