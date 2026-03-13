@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { useSession, signIn } from "next-auth/react";
 import AudioRecorder from "@/components/AudioRecorder";
 import CountdownTimer from "@/components/CountdownTimer";
 import SparFeedbackReport from "@/components/SparFeedbackReport";
@@ -231,8 +230,7 @@ function TransitionCountdown({ onDone }: { onDone: () => void }) {
 }
 
 export default function SparPage() {
-  const { data: session } = useSession();
-  const userEmail = session?.user?.email ?? "";
+  const userEmail = "";
   const [stage, setStage] = useState<Stage>("setup");
   const [difficulty, setDifficulty] = useState<SparDifficulty>("medium");
   const [userName, setUserName] = useState("");

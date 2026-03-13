@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "scripts/start-ollama.sh && next dev",
-    "host": "scripts/start-ollama.sh && next dev & caddy run --config Caddyfile",
+    "dev": "scripts/start-ollama.sh && caddy start --config Caddyfile && next dev",
+    "host": "scripts/start-ollama.sh && caddy start --config Caddyfile && next dev",
     "build": "next build",
     "start": "scripts/start-ollama.sh && next start",
     "lint": "eslint",

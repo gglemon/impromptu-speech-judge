@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
 
@@ -189,8 +188,6 @@ const features: Feature[] = [
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function Home() {
-  const { data: session } = useSession();
-  const isSignedIn = !!session?.user;
   const [lastMode, setLastMode] = useState<LastMode | null>(null);
   const [sessionCount, setSessionCount] = useState(0);
   const [streak, setStreak] = useState(0);
@@ -263,7 +260,7 @@ export default function Home() {
         </div>
 
         {/* ── Stats strip ────────────────────────────────────────────────── */}
-        {isSignedIn && (sessionCount > 0 || streak > 0) && (
+        {(sessionCount > 0 || streak > 0) && (
           <div className="flex items-center justify-center gap-3 flex-wrap">
             {sessionCount > 0 && (
               <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm">
@@ -283,7 +280,7 @@ export default function Home() {
         )}
 
         {/* ── Jump back in ───────────────────────────────────────────────── */}
-        {isSignedIn && lastMode && (
+        {lastMode && (
           <div className={`flex items-center justify-between gap-4 rounded-2xl border ${lastMode.accentBorder} ${lastMode.accentBg} px-5 py-4`}>
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-0.5">

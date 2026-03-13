@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useSession, signIn } from "next-auth/react";
 import AudioRecorder from "@/components/AudioRecorder";
 import AudioPlayer from "@/components/AudioPlayer";
 import CasualFeedbackReport from "@/components/CasualFeedbackReport";
@@ -21,7 +20,6 @@ interface CasualFeedback {
 }
 
 export default function CasualPage() {
-  const { data: session } = useSession();
   const [stage, setStage] = useState<Stage>("loading");
   const [topic, setTopic] = useState("");
   const [transcript, setTranscript] = useState("");

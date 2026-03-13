@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
-import { useSession, signIn } from "next-auth/react";
 import AudioRecorder from "@/components/AudioRecorder";
 import { getRandomTwister } from "@/lib/tongueTwisters";
 
@@ -47,7 +46,6 @@ function ScoreRing({ value, label, color }: { value: number; label: string; colo
 }
 
 export default function TongueTwistersPage() {
-  const { data: session } = useSession();
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const [twister, setTwister] = useState<string>("");
   const [repetitions, setRepetitions] = useState(3);
