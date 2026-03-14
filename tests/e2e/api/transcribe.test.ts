@@ -1,3 +1,9 @@
+// Set GROQ_API_KEY before route module is imported (captured at module level)
+const { GROQ_API_KEY_RESTORE } = vi.hoisted(() => {
+  process.env.GROQ_API_KEY = "test-key";
+  return { GROQ_API_KEY_RESTORE: process.env.GROQ_API_KEY };
+});
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { testApiHandler } from "next-test-api-route-handler";
 import * as handler from "@/app/api/transcribe/route";
