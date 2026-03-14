@@ -7,5 +7,9 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    env: {
+      GROQ_API_KEY: "test",
+      STT_PROVIDER: "groq",
+    },
   },
 });
