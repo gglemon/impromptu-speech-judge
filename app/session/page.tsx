@@ -141,6 +141,24 @@ function SessionContent() {
         if (!feedbackRes.ok) throw new Error(feedbackData.error ?? `Feedback failed: ${feedbackRes.status}`);
         setFeedback(feedbackData);
         setState("feedback");
+
+        // Save recording (non-blocking)
+        ;(async () => {
+          try {
+            const form = new FormData();
+            form.append("sessionData", JSON.stringify({
+              mode: "impromptu", topic, transcript: transcriptText,
+              duration_seconds: durationSeconds, difficulty,
+              speech_length_seconds: speechLengthSeconds,
+              feedback: feedbackData, savedAt: new Date().toISOString(),
+            }));
+            if (recordingUrl) {
+              const blob = await fetch(recordingUrl).then(r => r.blob());
+              form.append("audio_speech", blob, "audio_speech.webm");
+            }
+            await fetch("/api/recording-save", { method: "POST", body: form });
+          } catch {}
+        })();
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
       }

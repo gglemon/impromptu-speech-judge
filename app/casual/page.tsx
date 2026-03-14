@@ -119,6 +119,22 @@ export default function CasualPage() {
       if (!res.ok) throw new Error(data.error ?? "Feedback failed");
       setFeedback(data);
       setStage("feedback");
+
+      // Save recording (non-blocking)
+      ;(async () => {
+        try {
+          const form = new FormData();
+          form.append("sessionData", JSON.stringify({
+            mode: "casual", topic, transcript, speechLength,
+            feedback: data, savedAt: new Date().toISOString(),
+          }));
+          if (recordingUrl) {
+            const blob = await fetch(recordingUrl).then(r => r.blob());
+            form.append("audio_speech", blob, "audio_speech.webm");
+          }
+          await fetch("/api/recording-save", { method: "POST", body: form });
+        } catch {}
+      })();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
       setStage("processing"); // stays on processing with error shown

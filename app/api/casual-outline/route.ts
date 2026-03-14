@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { callLLM } from "@/lib/llm";
 import { parseLLMJson } from "@/lib/parseLLMJson";
+import { casualOutlinePrompt } from "@/lib/prompts/casual";
 
 export async function POST(req: NextRequest) {
   const { allowed, retryAfterMs } = checkRateLimit();
@@ -15,26 +16,8 @@ export async function POST(req: NextRequest) {
   try {
     const { topic, speechLength = 60 } = await req.json();
 
-    const numPoints = speechLength <= 30 ? 2 : speechLength <= 60 ? 3 : speechLength <= 90 ? 4 : 5;
-
-    const text = await callLLM(
-      `You are a speech coach helping an elementary school student plan a short speech.
-
-Topic: "${topic}"
-Speech length: ${speechLength} seconds
-
-Create a skeleton outline — structure and placeholders ONLY. Do NOT include any actual content, examples, or opinions. Each slot should be a short label describing what kind of thing goes there (e.g. "Hook question", "Personal example", "Reason 1", "Call to action"), NOT the actual content itself. The student will fill in their own ideas.
-
-Number of main points: ${numPoints}
-
-Return ONLY valid JSON (no markdown, no code blocks, no thinking tags):
-{
-  "opening": "<label for the opening move, e.g. 'Hook question' or 'Surprising fact'>",
-  "points": ["<label for point 1, e.g. 'Reason 1 + personal example'>", "<label for point 2>"${numPoints >= 3 ? ', "<label for point 3>"' : ""}${numPoints >= 4 ? ', "<label for point 4>"' : ""}${numPoints >= 5 ? ', "<label for point 5>"' : ""}],
-  "closing": "<label for the closing move, e.g. 'Restate main idea + call to action'>"
-}`,
-      req.signal
-    );
+    const prompt = casualOutlinePrompt({ topic, speechLength });
+    const text = await callLLM(prompt, req.signal);
 
     const outline = parseLLMJson(text);
     return NextResponse.json(outline);

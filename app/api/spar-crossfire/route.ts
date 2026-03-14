@@ -1,58 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callLLM } from "@/lib/llm";
 import { parseLLMJson } from "@/lib/parseLLMJson";
+import { sparCrossfirePrompt } from "@/lib/prompts/spar";
 
 export async function POST(req: NextRequest) {
   try {
     const { resolution, aiSide, aiConstructive, userConstructive, difficulty = "medium", aiDifficulty = "medium" } = await req.json();
-    const languageStyle = difficulty === "easy"
-      ? "Use language a 3rd or 4th grade student would understand: simple words, short direct questions, concrete examples."
-      : difficulty === "medium"
-      ? "Use language a 5th or 6th grade student would understand: clear vocabulary, focused questions, logical reasoning."
-      : "Use language a middle school or high school student would understand: precise vocabulary, pointed analytical questions.";
 
-    const text = await callLLM(
-      `You are a skilled debater preparing crossfire questions for a SPAR debate.
-
-LANGUAGE STYLE: ${languageStyle}
-
-Resolution: ${resolution}
-Your side: ${aiSide === "aff" ? "Affirmative" : "Negative"}
-
-Your own constructive speech (what you argued):
-"""
-${aiConstructive || "(Not provided)"}
-"""
-
-Your opponent just delivered this constructive speech:
-"""
-${userConstructive || "(No speech recorded)"}
-"""
-
-${aiDifficulty === "easy"
-  ? `You are roleplaying a nervous 3rd-grade student who barely understands debate. Generate 2 crossfire questions that:
-- Are very simple and slightly confused, like a child who doesn't quite get what their opponent said
-- May be vague, off-point, or accidentally easy to answer
-- Sound natural for a young kid (e.g. "But like... why do you think that?" or "What if someone just doesn't agree though?")
-- Do NOT use debate jargon or sophisticated phrasing
-Return only 2 questions in the array.`
-  : aiDifficulty === "hard"
-  ? "Generate 3 sharp, incisive crossfire questions that directly target the weakest points in their argument. Make them difficult to dodge."
-  : "Generate 3 targeted crossfire questions that directly challenge the specific arguments, evidence, or claims your opponent made."} ${aiDifficulty !== "easy" ? `Each question should:
-- Reference something the opponent actually said (or note if they gave no speech)
-- Expose a weakness, contradiction, or missing evidence in their argument
-- Optionally connect back to one of your own constructive arguments
-- Be answerable in 1-2 sentences (not open-ended essays)` : ""}
-
-Return ONLY valid JSON (no markdown, no code blocks, no thinking tags):
-{
-  "crossfire_questions": [
-    "<question 1>",
-    "<question 2>"${aiDifficulty !== "easy" ? `,
-    "<question 3>"` : ""}
-  ]
-}`
-    , req.signal);
+    const prompt = sparCrossfirePrompt({ resolution, aiSide, aiConstructive, userConstructive, difficulty, aiDifficulty });
+    const text = await callLLM(prompt, req.signal);
 
     const result = parseLLMJson(text);
     return NextResponse.json(result);

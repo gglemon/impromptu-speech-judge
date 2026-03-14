@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rateLimiter";
 import { callLLM } from "@/lib/llm";
 import { parseLLMJson } from "@/lib/parseLLMJson";
+import { casualExamplePrompt } from "@/lib/prompts/casual";
 
 export async function POST(req: NextRequest) {
   const { allowed, retryAfterMs } = checkRateLimit();
@@ -13,26 +14,9 @@ export async function POST(req: NextRequest) {
   }
   try {
     const { topic, speechLength = 60 } = await req.json();
-    const wordTarget = Math.round((speechLength / 60) * 150);
 
-    const text = await callLLM(
-      `Write a short example speech for an elementary school student.
-
-Topic: "${topic}"
-
-Write it like a confident 3rd or 4th grader: short sentences, simple everyday words, concrete examples from school or home. Be enthusiastic and friendly. The speech should be about ${wordTarget} words long (for a ${speechLength}-second speech).
-
-Structure the speech clearly with:
-- An opening paragraph (hook or greeting)
-- A middle section with 2–3 key points, each starting with "- " on its own line
-- A closing paragraph
-
-Separate each section with a blank line. Do NOT use headers or titles — just the speech text.
-
-Return ONLY valid JSON (no markdown, no code blocks, no thinking tags):
-{ "ai_example": "<the structured speech>" }`,
-      req.signal
-    );
+    const prompt = casualExamplePrompt({ topic, speechLength });
+    const text = await callLLM(prompt, req.signal);
 
     const result = parseLLMJson(text);
     return NextResponse.json(result);

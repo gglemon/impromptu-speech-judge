@@ -1,40 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callLLM } from "@/lib/llm";
 import { parseLLMJson } from "@/lib/parseLLMJson";
+import { sparPrepHintsPrompt } from "@/lib/prompts/spar";
 
 export async function POST(req: NextRequest) {
   try {
     const { resolution, userSide, difficulty = "medium" } = await req.json();
-    const sideLabel = userSide === "aff" ? "Affirmative" : "Negative";
-    const voteDir = userSide === "aff" ? "for" : "against";
-    const languageStyle = difficulty === "easy"
-      ? "Use language a 3rd or 4th grade student would understand: simple words, short sentences, concrete everyday examples."
-      : difficulty === "medium"
-      ? "Use language a 5th or 6th grade student would understand: clear vocabulary, logical reasoning, relatable examples."
-      : "Use language a middle school or high school student would understand: precise vocabulary, nuanced reasoning, academic examples.";
 
-    const text = await callLLM(
-      `You are a debate coach. The student argues the ${sideLabel} side (vote ${voteDir}) of:
-
-LANGUAGE STYLE: ${languageStyle}
-
-Resolution: ${resolution}
-
-Return a prep sheet as ONLY valid JSON (no markdown, no code blocks):
-{
-  "value": "<1-2 word value>",
-  "criterion": "<criterion — 1 sentence why>",
-  "arguments": [
-    { "claim": "<1 sentence>", "talkingPoints": ["<1 sentence>", "<1 sentence>"], "significance": "<1 sentence>" },
-    { "claim": "<1 sentence>", "talkingPoints": ["<1 sentence>", "<1 sentence>"], "significance": "<1 sentence>" },
-    { "claim": "<1 sentence>", "talkingPoints": ["<1 sentence>", "<1 sentence>"], "significance": "<1 sentence>" }
-  ],
-  "counters": [
-    { "theyArgue": "<1 sentence>", "yourRebuttal": "<1 sentence>" },
-    { "theyArgue": "<1 sentence>", "yourRebuttal": "<1 sentence>" }
-  ]
-}`
-    , req.signal);
+    const prompt = sparPrepHintsPrompt({ resolution, userSide, difficulty });
+    const text = await callLLM(prompt, req.signal);
 
     console.log("[spar-prep-hints] raw LLM output:", text.slice(0, 500));
     const result = parseLLMJson(text);
