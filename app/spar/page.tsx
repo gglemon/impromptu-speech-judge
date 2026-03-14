@@ -54,7 +54,7 @@ function getStableTopics(diff: SparDifficulty): string[] {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function SparPage() {
-  const userEmail = "";
+  const userEmail = "gglemon@gmail.com";
   const [stage, setStage] = useState<Stage>("setup");
   const [difficulty, setDifficulty] = useState<SparDifficulty>("medium");
   const [userName, setUserName] = useState("");

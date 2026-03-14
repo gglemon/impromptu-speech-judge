@@ -53,7 +53,7 @@ function advanceState(
 }
 
 export default function DebatePracticePage() {
-  const userEmail = "";
+  const userEmail = "gglemon@gmail.com";
   const [topic, setTopic] = useState<string>("");
   const [stage, setStage] = useState<Stage>("intro");
   const [turnIndex, setTurnIndex] = useState(0);
