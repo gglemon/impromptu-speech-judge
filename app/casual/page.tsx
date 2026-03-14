@@ -92,16 +92,15 @@ export default function CasualPage() {
     }
   }
 
-  // Restore topic from sessionStorage (survives OAuth redirect), otherwise pick fresh
-  useEffect(() => {
-    try {
-      const saved = sessionStorage.getItem("casual:topic");
-      if (saved) { setTopic(saved); setStage("topic"); return; }
-    } catch {}
+  function pickNewTopic() {
     const t = casualTopics[Math.floor(Math.random() * casualTopics.length)];
-    sessionStorage.setItem("casual:topic", t);
     setTopic(t);
+  }
+
+  useEffect(() => {
+    pickNewTopic();
     setStage("topic");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleStop(transcript: string, duration: number, recordingUrl: string) {
@@ -172,11 +171,17 @@ export default function CasualPage() {
               <p className="text-emerald-300 text-sm font-medium uppercase tracking-wide">Your Topic</p>
               <textarea
                 value={topic}
-                onChange={e => { setTopic(e.target.value); try { sessionStorage.setItem("casual:topic", e.target.value); } catch {} }}
+                onChange={e => setTopic(e.target.value)}
                 rows={2}
                 placeholder="Type a topic..."
                 className="text-3xl font-bold text-white leading-snug text-center w-full bg-transparent border-none resize-none focus:outline-none placeholder-emerald-900"
               />
+              <button
+                onClick={pickNewTopic}
+                className="text-xs text-emerald-400 hover:text-emerald-200 transition-colors"
+              >
+                🔀 Pick a new topic
+              </button>
             </div>
 
             <div className="space-y-3">
@@ -379,7 +384,7 @@ export default function CasualPage() {
             transcript={transcript}
             audioUrl={audioUrl}
             onRedo={() => {
-              try { sessionStorage.removeItem("casual:topic"); } catch {}
+              pickNewTopic();
               setFeedback(null);
               setTranscript("");
               setAudioUrl("");
